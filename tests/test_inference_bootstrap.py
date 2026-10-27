@@ -9,12 +9,20 @@ import pytest
 
 from p4_causal_validation.data.estimands import subset_for_estimand
 from p4_causal_validation.data.wsc import COVARIATE_CANDIDATES
-from p4_causal_validation.estimators.aipw import EmptyFoldError, FitFailure, att_influence_scores, crossfit_aipw
+from p4_causal_validation.estimators.aipw import (
+    EmptyFoldError,
+    FitFailure,
+    _logit_predict,
+    att_influence_scores,
+    crossfit_aipw,
+    propensity_warning_failure_reason,
+)
 from p4_causal_validation.estimators.common import DataContractError, EmptyStratumError, EstimandMismatchError
 from p4_causal_validation.estimators.unadjusted import difference_in_means
 from p4_causal_validation.experiments.primary_specification import mark_synthetic, qed_concordant_att
 from p4_causal_validation.inference.bootstrap import (
     PROTOCOL_BOOTSTRAP_REPLICATES,
+    confirmatory_interval_rule_met,
     participant_bootstrap,
     stratified_primary_contrast_bootstrap,
 )
@@ -160,6 +168,12 @@ def test_failed_replicates_are_kept_in_the_accounting(monkeypatch):
     assert "did not converge" in result["failures"][0]["message"]
     assert result["failures_not_redrawn"] is True
     assert result["percentile_ci_low"] <= result["percentile_ci_high"]
+    assert result["confirmatory_interval_authorized"] is False
+    assert result["interval_is_not_a_confirmatory_interval"] is True
+    assert result["interval_status"] == "diagnostic_only_zero_failure_rule_not_met"
+    assert result["failure_share_threshold"] is None
+    assert result["real_wsc_execution_authorized"] is False
+    assert len(result["failures"]) == result["n_failed"] == 1
 
 
 def test_empty_primary_cell_is_reported_and_wrong_estimand_is_refused():
@@ -207,6 +221,10 @@ def test_duplicate_bootstrap_copies_stay_inside_one_fold():
     assert first.diagnostics["n_folds"] == 5
     assert first.diagnostics["seed"] == 20261026
     assert first.diagnostics["fold_assignment"] == "distinct_participant_id"
+    import inspect
+    import p4_causal_validation.estimators.aipw as aipw_module
+
+    assert "StratifiedKFold" not in inspect.getsource(aipw_module)
     assert first.diagnostics["fold_id"] == second.diagnostics["fold_id"]
     paired = subset.assign(fold=folds)
     assert int(paired.groupby("row_id")["fold"].nunique().max()) == 1
@@ -246,3 +264,107 @@ def test_duplicate_source_ids_are_refused_before_resampling():
     duplicated = mark_synthetic(pd.concat([frame, frame.iloc[[0]]], ignore_index=True))
     with pytest.raises(DataContractError, match="row_id"):
         stratified_primary_contrast_bootstrap(duplicated, n_replicates=2, seed=1)
+
+
+def test_zero_failure_rule_accepts_only_a_complete_protocol_run():
+    assert confirmatory_interval_rule_met(2000, 2000, 0) is True
+    assert confirmatory_interval_rule_met(2000, 1999, 1) is False
+    assert confirmatory_interval_rule_met(2000, 0, 2000) is False
+    assert confirmatory_interval_rule_met(2, 2, 0) is False
+    assert confirmatory_interval_rule_met(1999, 1999, 0) is False
+    assert confirmatory_interval_rule_met(2000, 2000, 1) is False
+
+
+def test_fewer_than_two_successes_leave_the_interval_empty(monkeypatch):
+    frame = _synthetic_wsc(4, effect=0.2)
+    import p4_causal_validation.experiments.primary_specification as spec
+
+    real = spec.qed_concordant_att
+    calls = {"n": 0}
+
+    def wrapped(data):
+        calls["n"] += 1
+        if calls["n"] > 1:
+            raise FitFailure("injected: logistic propensity did not converge")
+        return real(data)
+
+    monkeypatch.setattr(spec, "qed_concordant_att", wrapped)
+    result = stratified_primary_contrast_bootstrap(frame, n_replicates=2, seed=1)
+    assert result["n_success"] == 0
+    assert result["n_failed"] == 2
+    assert result["n_success"] + result["n_failed"] == 2
+    assert len(result["failures"]) == 2
+    assert result["failures_not_redrawn"] is True
+    assert result["bootstrap_se"] is None
+    assert result["percentile_ci_low"] is None
+    assert result["percentile_ci_high"] is None
+    assert result["bootstrap_covariance"] is None
+    assert result["confirmatory_interval_authorized"] is False
+    assert result["failure_share_threshold"] is None
+
+
+def test_perfect_separation_is_a_recorded_fit_failure(monkeypatch):
+    treatment = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    covariates = treatment.astype(float).reshape(-1, 1)
+    with pytest.raises(FitFailure, match="perfect or quasi-complete separation"):
+        _logit_predict(covariates, treatment, covariates)
+    frame = _synthetic_wsc(8, effect=0.1)
+    import p4_causal_validation.experiments.primary_specification as spec
+
+    real = spec.qed_concordant_att
+    calls = {"n": 0}
+
+    def wrapped(data):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            _logit_predict(covariates, treatment, covariates)
+        return real(data)
+
+    monkeypatch.setattr(spec, "qed_concordant_att", wrapped)
+    result = stratified_primary_contrast_bootstrap(frame, n_replicates=2, seed=2)
+    assert result["n_failed"] == 1
+    assert result["n_success"] == 1
+    assert result["failures"][0]["error_type"] == "FitFailure"
+    assert "perfect or quasi-complete separation" in result["failures"][0]["message"]
+    assert result["confirmatory_interval_authorized"] is False
+    assert result["failures_not_redrawn"] is True
+    assert result["bootstrap_se"] is None
+
+
+def test_ordinary_numeric_warning_is_not_an_automatic_failure():
+    assert propensity_warning_failure_reason("RuntimeWarning") is None
+    assert propensity_warning_failure_reason("UserWarning") is None
+    assert propensity_warning_failure_reason("PerfectSeparationWarning") == "perfect or quasi-complete separation"
+    assert propensity_warning_failure_reason("ConvergenceWarning") == "optimizer did not converge"
+    rng = np.random.default_rng(0)
+    covariates = rng.normal(scale=0.05, size=(40, 2))
+    treatment = np.array([0, 1] * 20)
+    predicted = _logit_predict(covariates, treatment, covariates)
+    assert np.isfinite(predicted).all()
+
+
+def test_original_sample_fit_failure_aborts_the_bootstrap():
+    frame = _synthetic_wsc(6, effect=0.0, n1=40, n2=24, n3=8, n4=80)
+    frame["female"] = frame["mathGrp"].astype(float)
+    seen = []
+    with pytest.raises(FitFailure, match="separation|did not converge|LinAlgError|non-finite"):
+        stratified_primary_contrast_bootstrap(frame, n_replicates=2, seed=1, observer=seen.append)
+    assert seen == []
+
+
+def test_programming_error_is_not_recorded_as_a_replicate_failure(monkeypatch):
+    frame = _synthetic_wsc(13, effect=0.2)
+    import p4_causal_validation.experiments.primary_specification as spec
+
+    real = spec.qed_concordant_att
+    calls = {"n": 0}
+
+    def wrapped(data):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise RuntimeError("programming error sentinel")
+        return real(data)
+
+    monkeypatch.setattr(spec, "qed_concordant_att", wrapped)
+    with pytest.raises(RuntimeError, match="programming error sentinel"):
+        stratified_primary_contrast_bootstrap(frame, n_replicates=2, seed=1)

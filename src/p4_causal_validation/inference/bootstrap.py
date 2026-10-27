@@ -23,6 +23,24 @@ PROTOCOL_BOOTSTRAP_REPLICATES = 2000
 PROTOCOL_BOOTSTRAP_SEED = 20261026
 
 
+def confirmatory_interval_rule_met(n_replicates: int, n_success: int, n_failed: int) -> bool:
+    """Return whether the zero-failure confirmatory rule is met.
+
+    The percentile interval meets that rule only when the caller requested the
+    protocol count of 2,000 replicates and every one of those replicates
+    succeeded. Any failure makes the result false. A shorter run is false even
+    when it has no failures. This is not a numeric failure-share threshold and
+    it does not authorize a real WSC analysis.
+    """
+    if n_replicates != PROTOCOL_BOOTSTRAP_REPLICATES:
+        return False
+    if n_success < 0 or n_failed < 0:
+        return False
+    if n_success + n_failed != n_replicates:
+        return False
+    return n_failed == 0 and n_success == PROTOCOL_BOOTSTRAP_REPLICATES
+
+
 def participant_bootstrap(
     n_participants: int,
     statistic: Callable[[np.ndarray], float],
@@ -195,6 +213,7 @@ def stratified_primary_contrast_bootstrap(
             )
     if len(successes) + len(failures) != n_replicates:
         raise RuntimeError("Bootstrap replicate accounting does not match the requested count.")
+    rule_met = confirmatory_interval_rule_met(n_replicates, len(successes), len(failures))
     result = {
         "not_a_wsc_result": True,
         "resampling": "stratified with replacement inside G1, G2, and G4; cell sizes held fixed; one shared G1 draw",
@@ -213,9 +232,13 @@ def stratified_primary_contrast_bootstrap(
         "estimator_failures_recorded": ["FitFailure", "EmptyFoldError", "EmptyStratumError"],
         "unexpected_exceptions_are_not_recorded_as_failures": True,
         "failure_share_threshold": None,
-        "failure_share_threshold_status": "not_specified_by_protocol_owner_decision_required",
-        "confirmatory_interval_authorized": False,
-        "interval_is_not_a_confirmatory_interval": True,
+        "failure_share_threshold_status": "not_applicable_zero_failure_rule_is_not_a_numeric_share",
+        "confirmatory_failure_rule": "all_2000_requested_replicates_succeed",
+        "confirmatory_interval_authorized": rule_met,
+        "interval_is_not_a_confirmatory_interval": not rule_met,
+        "zero_failure_rule_does_not_authorize_real_wsc": True,
+        "real_wsc_execution_authorized": False,
+        "machine_approval_of_failure_rule": False,
         "fixed_cell_bootstrap_is_not_randomization_inference": True,
         "bootstrap_does_not_test_unmeasured_confounding": True,
         "cell_counts": counts,
@@ -244,6 +267,11 @@ def stratified_primary_contrast_bootstrap(
         result["percentile_ci_low"] = low
         result["percentile_ci_high"] = high
         result["bootstrap_covariance"] = float(np.cov(rct_draws, qed_draws, ddof=1)[0, 1])
+        result["interval_status"] = (
+            "zero_failure_rule_met_this_is_not_a_real_wsc_result"
+            if rule_met
+            else "diagnostic_only_zero_failure_rule_not_met"
+        )
     else:
         result["bootstrap_se"] = None
         result["percentile_ci_low"] = None

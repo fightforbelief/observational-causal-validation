@@ -6,6 +6,8 @@ unmeasured confounding, and the normal interval is not an equivalence test.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import statsmodels.api as sm
 from sklearn.model_selection import KFold
@@ -81,14 +83,54 @@ def _ols_predict(x_train, y_train, x_test) -> np.ndarray:
     return predicted
 
 
+def propensity_warning_failure_reason(warning_category: str) -> str | None:
+    """Classify one warning from the propensity fit.
+
+    Perfect separation, quasi-complete separation, and non-convergence are fit
+    failures. Ordinary numeric warnings are not failures by themselves.
+    """
+    if warning_category == "PerfectSeparationWarning":
+        return "perfect or quasi-complete separation"
+    if warning_category == "ConvergenceWarning":
+        return "optimizer did not converge"
+    return None
+
+
+def _statistical_fit_error(exc: BaseException) -> bool:
+    if isinstance(exc, (np.linalg.LinAlgError, ValueError)):
+        return True
+    return type(exc).__name__ in {"PerfectSeparationError", "ConvergenceError"}
+
+
+def _failure_reason_from_warnings(caught) -> str | None:
+    for item in caught:
+        reason = propensity_warning_failure_reason(item.category.__name__)
+        if reason is not None:
+            return reason
+    return None
+
+
 def _logit_predict(x_train, d_train, x_test) -> np.ndarray:
     if np.unique(d_train).size < 2:
         raise FitFailure("Logistic propensity training fold lost an arm.")
     design = sm.add_constant(x_train, has_constant="add")
+    caught: list[warnings.WarningMessage] = []
     try:
-        model = sm.Logit(d_train, design).fit(disp=False, maxiter=200)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            model = sm.Logit(d_train, design).fit(disp=False, maxiter=200)
+    except FitFailure:
+        raise
     except Exception as exc:
+        if not _statistical_fit_error(exc):
+            raise
+        reason = _failure_reason_from_warnings(caught)
+        if reason is not None:
+            raise FitFailure(f"Logistic propensity fit failed: {reason}. {type(exc).__name__}: {exc}") from exc
         raise FitFailure(f"Logistic propensity fit failed: {type(exc).__name__}: {exc}") from exc
+    reason = _failure_reason_from_warnings(caught)
+    if reason is not None:
+        raise FitFailure(f"Logistic propensity fit failed: {reason}.")
     converged = bool(getattr(model, "mle_retvals", {}).get("converged", False))
     if not converged:
         raise FitFailure("Logistic propensity did not converge.")
