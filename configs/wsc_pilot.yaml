@@ -1,0 +1,8 @@
+status: exploratory_not_run
+owner_acknowledged_pilot: false
+reason: Pilot may run only after the owner acknowledges that its output cannot choose thresholds or confirm the study.
+wsc_rda: C:/Users/hanqi/Desktop/projects/_p4_external_sources/wscdata/data/WSCdata.rda
+primary_outcome: mathPost
+primary_estimand: RCT_effect_prefer_math
+seed: 20261026
+n_folds: 5

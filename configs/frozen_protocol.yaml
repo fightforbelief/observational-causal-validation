@@ -1,0 +1,102 @@
+status: PENDING_OWNER_APPROVAL
+study: p4-observational-causal-validation
+frozen_on: "2026-10-26"
+approval_rule: confirmatory code refuses to run unless configs/OWNER_APPROVAL.json exists, names an approver, sets decision=approved, and repeats the sha256 of this file. Nothing in this repository creates that file.
+
+primary_outcome: mathPost
+secondary_outcome: vocabPost
+outcomes_are_not_combined: true
+
+primary_estimand: RCT_effect_prefer_math
+primary_definition: >
+  Average effect of randomized math versus vocabulary assignment on mathPost
+  among participants with mathSel=1. The randomized benchmark is the Neyman
+  difference in means inside that stratum. It is an estimate with sampling
+  uncertainty, not an individual-level truth and not a noiseless gold standard.
+aligned_observational_estimand: QED_concordant_ATT
+aligned_observational_definition: >
+  ATT on the concordant sample mathSel==mathGrp, where treatment is mathGrp.
+  Inside this sample treatment and preference are the same variable, so the
+  treated group is the math-preferring concordant arm. Keller et al. argue this
+  targets the same preference-stratum effect as the randomized benchmark only
+  under unconfoundedness, overlap, and consistency. A raw full-sample contrast
+  or an unadjusted G1-versus-G4 contrast is a different comparison and must not
+  be labeled pure confounding bias.
+
+secondary_estimands:
+  - RCT_ATE_full
+  - QED_concordant_ATE
+  - RCT_effect_prefer_vocab
+
+covariates:
+  - female
+  - white
+  - black
+  - asian
+  - hisp
+  - married
+  - logAge
+  - income
+  - collegeS
+  - collegeM
+  - collegeD
+  - calc
+  - logBooks
+  - mathLike
+  - big5O_or_Big5O
+  - big5C_or_Big5C
+  - big5E_or_Big5E
+  - big5A_or_Big5A
+  - big5N_or_Big5N
+  - AMAS
+  - logBDI
+  - MCS
+  - GSES
+  - vocabPre
+  - mathPre
+excluded_from_adjustment:
+  - mathPost
+  - vocabPost
+  - MCSpost
+  - mathGrp
+  - mathSel
+  - row_id
+  - age
+  - books
+  - BDI
+exclusion_reasons:
+  mathSel: constant or identical to treatment inside the concordant sample
+  age_books_BDI: raw versions of the pre-specified log covariates
+  MCSpost: post-treatment
+
+estimators:
+  - unadjusted_difference_in_means
+  - linear_regression_hc1
+  - linear_g_computation
+  - hajek_ipw_ate
+  - hajek_ipw_att
+  - nn_match_att_caliper_0.2sd
+  - crossfit_aipw_ate_linear
+  - crossfit_aipw_att_linear
+primary_observational_estimator: crossfit_aipw_att_linear
+primary_randomized_estimator: unadjusted_difference_in_means
+nuisance_models: main-effects linear outcome regressions and a main-effects logistic propensity
+n_folds: 5
+seed: 20261026
+bootstrap_for_overlapping_contrast: 2000
+bootstrap_status: specified but not run before approval
+numerical_propensity_floor: 1.0e-6
+scientific_trimming: none
+matching_caliper: 0.2 standard deviations of the logit propensity
+scale_for_standardized_difference: standard deviation of mathPost among randomized vocabulary assignments inside the primary stratum
+equivalence_margin: not specified
+equivalence_claim: forbidden
+multiple_comparisons: primary contrast is the only confirmatory comparison; all other outcome and estimand combinations are secondary
+
+stop_rules:
+  - stop if preference or assignment cannot be coded from mathSel and mathGrp
+  - stop if a comparison mixes estimand labels without a written override
+  - stop if the conclusion requires a threshold chosen after seeing the benchmark discrepancy
+  - stop if a training fold loses either arm rather than retuning the fold count
+  - do not interpret interval overlap as equivalence
+  - do not interpret double robustness as removal of unmeasured confounding

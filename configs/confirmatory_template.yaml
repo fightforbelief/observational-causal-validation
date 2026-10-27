@@ -1,0 +1,11 @@
+status: locked_pending_owner_approval
+protocol_path: configs/frozen_protocol.yaml
+approval_path: configs/OWNER_APPROVAL.json
+primary_outcome: mathPost
+primary_estimand: RCT_effect_prefer_math
+seed: 20261026
+n_folds: 5
+bootstrap_replicates: 2000
+numerical_propensity_floor: 1.0e-6
+scientific_trimming: none
+equivalence_test: not_pre_specified

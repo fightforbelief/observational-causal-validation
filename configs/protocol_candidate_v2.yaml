@@ -1,0 +1,199 @@
+status: CANDIDATE_NOT_APPROVED
+replaces_frozen_protocol: false
+frozen_protocol_path: configs/frozen_protocol.yaml
+study: p4-observational-causal-validation
+candidate_on: "2026-10-26"
+approval_rule: >
+  This file is a candidate, not a frozen protocol and not an approval.
+  The confirmatory entry still reads configs/frozen_protocol.yaml and still
+  refuses to run unless configs/OWNER_APPROVAL.json names an approver, sets
+  decision=approved, and repeats the sha256 of that frozen file. Nothing in
+  this repository creates the approval file. Adopting this candidate requires
+  the owner to replace the frozen file deliberately and to approve the new
+  hash. Do not point OWNER_APPROVAL.json at this candidate while the
+  confirmatory entry still hashes the original frozen file.
+
+recommended_option: A
+recommendation_basis: >
+  Keller et al. (2025) section 4 shows that the QED ATT and the randomized
+  effect among math-preferrers are the same causal parameter under random
+  assignment. The recommendation does not use published or recomputed
+  effect sizes, and it does not treat the stratum size of 607 as a reason
+  to switch targets.
+
+primary_outcome: mathPost
+secondary_outcome: vocabPost
+outcomes_are_not_combined: true
+
+primary_estimand: RCT_effect_prefer_math
+primary_definition: >
+  E[Y(1)-Y(0) | S=1] for mathPost, where S is mathSel measured before
+  assignment and Y(1), Y(0) are potential math post-test scores under math
+  and vocabulary assignment. The estimation sample is G1 union G2: 607
+  participants, 288 assigned to math and 319 assigned to vocabulary. The
+  randomized benchmark is the Neyman difference in means of mathGrp inside
+  that stratum. It is an estimate with sampling uncertainty, not an
+  individual-level truth and not a noiseless gold standard.
+aligned_observational_estimand: QED_concordant_ATT
+aligned_observational_definition: >
+  E[Y(1)-Y(0) | Z=1, G1 union G4] for mathPost. The estimation sample is the
+  concordant subset G1 union G4, 1105 participants. Treatment is mathGrp.
+  Inside this subset mathGrp equals mathSel, so the treated group is G1
+  only (288 people) and mathSel must not be a covariate. The primary
+  observational estimator is cross-fit linear/logistic AIPW with the ATT
+  score, which targets the treated units in that estimation sample.
+
+parameter_equivalence:
+  source: Keller et al. 2025, section 4, ATT display (12)-(17); ATE display (6)-(11)
+  att: >
+    The QED ATT equals the RCT effect among S=1 under random assignment
+    (Z independent of the potential outcomes), positivity for S and Z, and
+    the group definitions. Their ATT proof does not use P(Z=1)=1/2.
+  ate: >
+    Their ATE proof uses the design probability P(Z=1)=P(Z=0)=1/2 in
+    addition to random assignment. The realized assignment counts are 1064
+    math and 1136 vocabulary. Those counts are a finite-sample allocation,
+    not a reason to reweight the primary ATT.
+  what_equivalence_does_not_say: >
+    Parameter equivalence is not identification of the observational
+    functional. A numerical gap on the aligned pair is not evidence that
+    the two parameters refer to different populations.
+
+observational_identification:
+  required_beyond_parameter_equivalence:
+    - unconfoundedness of assignment given the pre-specified covariates inside G1 union G4
+    - positivity of assignment given those covariates inside that subset
+    - consistency, including that random assignment and self-selection do not create different versions of treatment
+  unconfoundedness_is_untestable: true
+  double_robustness_removes_unmeasured_confounding: false
+  mathSel_in_qed_propensity: forbidden
+  scientific_trimming: none
+  overlap_window_0.1_0.9: reporting only
+  published_overlap_note: >
+    Keller et al. report that a main-effects logit on the QED subset left
+    about 7 percent of the vocabulary-selected arm and about 5 percent of
+    the math-selected arm outside the other arm's propensity-logit range.
+    This round did not refit that model. The candidate does not add trimming
+    to remove those tails, because trimming would change the estimand.
+
+pairing:
+  primary:
+    randomized: RCT_effect_prefer_math
+    observational: QED_concordant_ATT
+    comparison_class: same parameter under the design proof; observational estimate requires extra assumptions
+  secondary:
+    - randomized: RCT_ATE_full
+      observational: QED_concordant_ATE
+      comparison_class: same parameter under the design proof only with design probability 1/2, plus observational identification assumptions
+    - randomized: RCT_effect_prefer_vocab
+      observational: not_implemented
+      comparison_class: >
+        For mathPost this is Keller's math ATU, the randomized contrast in
+        G3 union G4. The current AIPW code has ATE and ATT scores only, so
+        the QED ATU is outside the confirmatory contrast.
+  forbidden_as_primary_or_as_pure_confounding:
+    - unadjusted G1 versus G4 compared with the full-sample RCT ATE
+    - QED ATT compared with the full-sample RCT ATE
+    - QED ATE compared with RCT_effect_prefer_math
+    - any vocabPost contrast that keeps mathGrp as the treatment indicator
+
+vocabPost:
+  role: secondary
+  treatment_indicator: one minus mathGrp
+  reason: >
+    A mathGrp contrast on vocabPost estimates the effect of math assignment
+    on the vocabulary score. The vocabulary-training effect reverses that
+    indicator and is a separate estimand.
+  in_confirmatory_primary: false
+
+not_adopted:
+  - option_B_as_primary: full-sample ATE remains a secondary pair, not a replacement chosen for sample size
+  - option_C_iv_split: >
+      Wing and Clark identification through a random split is described by
+      Keller et al. in appendix B as lacking a direct applied analogue.
+      It is not added.
+
+secondary_estimands:
+  - RCT_ATE_full
+  - QED_concordant_ATE
+  - RCT_effect_prefer_vocab
+
+covariates:
+  - female
+  - white
+  - black
+  - asian
+  - hisp
+  - married
+  - logAge
+  - income
+  - collegeS
+  - collegeM
+  - collegeD
+  - calc
+  - logBooks
+  - mathLike
+  - big5O_or_Big5O
+  - big5C_or_Big5C
+  - big5E_or_Big5E
+  - big5A_or_Big5A
+  - big5N_or_Big5N
+  - AMAS
+  - logBDI
+  - MCS
+  - GSES
+  - vocabPre
+  - mathPre
+excluded_from_adjustment:
+  - mathPost
+  - vocabPost
+  - MCSpost
+  - mathGrp
+  - mathSel
+  - row_id
+  - age
+  - books
+  - BDI
+exclusion_reasons:
+  mathSel: identical to treatment inside the concordant sample
+  age_books_BDI: raw versions of the pre-specified log covariates
+  MCSpost: post-treatment
+
+estimators:
+  - unadjusted_difference_in_means
+  - linear_regression_hc1
+  - linear_g_computation
+  - hajek_ipw_ate
+  - hajek_ipw_att
+  - nn_match_att_caliper_0.2sd
+  - crossfit_aipw_ate_linear
+  - crossfit_aipw_att_linear
+primary_observational_estimator: crossfit_aipw_att_linear
+primary_randomized_estimator: unadjusted_difference_in_means
+nuisance_models: main-effects linear outcome regressions and a main-effects logistic propensity
+n_folds: 5
+seed: 20261026
+bootstrap_for_overlapping_contrast: 2000
+bootstrap_status: specified but not run before approval
+numerical_propensity_floor: 1.0e-6
+scientific_trimming: none
+matching_caliper: 0.2 standard deviations of the logit propensity
+scale_for_standardized_difference: standard deviation of mathPost among randomized vocabulary assignments inside the primary stratum
+equivalence_margin: not specified
+equivalence_claim: forbidden
+multiple_comparisons: primary contrast is the only confirmatory comparison; all other outcome and estimand combinations are secondary
+interpretation_lock: >
+  On the primary pair, do not relabel a numerical gap as a population
+  mismatch. Also do not relabel a gap from a forbidden cross-pair as pure
+  confounding. Do not change the primary estimand after seeing estimates.
+  Interval overlap is not equivalence. Do not introduce an equivalence
+  margin after seeing the discrepancy.
+
+stop_rules:
+  - stop if preference or assignment cannot be coded from mathSel and mathGrp
+  - stop if a comparison mixes estimand labels without a written override
+  - stop if the conclusion requires a threshold chosen after seeing the benchmark discrepancy
+  - stop if a training fold loses either arm rather than retuning the fold count
+  - do not interpret interval overlap as equivalence
+  - do not interpret double robustness as removal of unmeasured confounding
+  - do not fit the confirmatory contrast from this candidate file

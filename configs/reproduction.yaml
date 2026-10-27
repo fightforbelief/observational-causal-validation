@@ -1,0 +1,13 @@
+young_data_dir: C:/Users/hanqi/Desktop/projects/_p4_external_sources/young-reevaluating/Data
+young_cache_dir: C:/Users/hanqi/Desktop/projects/_p4_external_sources/young-reevaluating/saved_outputs
+young_commit: a6633e12506a71ed9b96ae12edbc4ce4a808feb8
+outcome: Outcome_Continuous
+common_upper: 44
+selected_fresh_estimator: unadjusted_difference_in_means
+selected_cohort: experimental
+selected_regime: common_cutoff
+output_json: artifacts/l1/reproduction.json
+do_not_run:
+  - flaml_automl
+  - r_matching
+  - fresh_doubly_robust_refit
