@@ -1,8 +1,8 @@
-"""Primary WSC specification from protocol candidate v2.
+"""Primary WSC specification from the frozen protocol.
 
-These functions estimate only when the frame is marked as a synthetic fixture.
-They do not open the WSC data file. Real confirmatory fitting stays behind
-the approval gate and is still disabled in the confirmatory entry.
+These functions do not open the WSC data file. A synthetic fixture is accepted.
+A real frame is accepted only when the confirmatory entry has marked it after
+the owner-approval and execution-authorization checks.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from p4_causal_validation.estimators.unadjusted import difference_in_means
 from p4_causal_validation.inference.bootstrap import PROTOCOL_BOOTSTRAP_REPLICATES, PROTOCOL_BOOTSTRAP_SEED
 
 SYNTHETIC_SOURCE = "synthetic_fixture"
+AUTHORIZED_REAL_SOURCE = "authorized_real_wsc"
 PRIMARY_OUTCOME = "mathPost"
 PRIMARY_RANDOMIZED = "RCT_effect_prefer_math"
 PRIMARY_OBSERVATIONAL = "QED_concordant_ATT"
@@ -36,13 +37,36 @@ class ConfirmatoryNotAuthorized(RuntimeError):
     """Real WSC outcome comparisons are outside this preparation build."""
 
 
+def _refuse_estimate() -> None:
+    raise ConfirmatoryNotAuthorized(
+        "Refusing to estimate. This build accepts source='synthetic_fixture' only. "
+        "Real WSC confirmatory analysis is not authorized."
+    )
+
+
 def assert_synthetic_fixture(frame: pd.DataFrame) -> None:
-    source = frame.attrs.get("source")
-    if source != SYNTHETIC_SOURCE:
-        raise ConfirmatoryNotAuthorized(
-            "Refusing to estimate. This build accepts source='synthetic_fixture' only. "
-            "Real WSC confirmatory analysis is not authorized."
-        )
+    if frame.attrs.get("source") != SYNTHETIC_SOURCE:
+        _refuse_estimate()
+
+
+def assert_authorized_real_frame(frame: pd.DataFrame) -> None:
+    authorized = (
+        frame.attrs.get("source") == AUTHORIZED_REAL_SOURCE
+        and frame.attrs.get("real_execution_authorized") is True
+    )
+    if not authorized:
+        _refuse_estimate()
+
+
+def assert_estimation_source(frame: pd.DataFrame) -> None:
+    if frame.attrs.get("source") == SYNTHETIC_SOURCE:
+        return
+    if (
+        frame.attrs.get("source") == AUTHORIZED_REAL_SOURCE
+        and frame.attrs.get("real_execution_authorized") is True
+    ):
+        return
+    _refuse_estimate()
 
 
 def assert_primary_outcome(outcome: str) -> None:
@@ -73,7 +97,7 @@ def randomized_math_preference_benchmark(frame: pd.DataFrame) -> EstimateResult:
     Treated rows are G1 (mathGrp == 1). Control rows are G2 (mathGrp == 0).
     The interval is sampling uncertainty, not a noiseless benchmark.
     """
-    assert_synthetic_fixture(frame)
+    assert_estimation_source(frame)
     assert_primary_outcome(PRIMARY_OUTCOME)
     subset = subset_for_estimand(frame, PRIMARY_RANDOMIZED)
     if not subset["mathSel"].eq(1).all():
@@ -92,13 +116,13 @@ def randomized_math_preference_benchmark(frame: pd.DataFrame) -> EstimateResult:
 
 
 def qed_concordant_att(frame: pd.DataFrame) -> EstimateResult:
-    """Five-fold linear ATT AIPW on the concordant sample, synthetic frames only.
+    """Five-fold linear ATT AIPW on the concordant sample.
 
     The estimation sample is G1 union G4. mathGrp is the treatment. Inside this
     sample mathSel equals mathGrp, so mathSel is not a covariate. Overlap
     outside [0.1, 0.9] is reported and does not delete rows.
     """
-    assert_synthetic_fixture(frame)
+    assert_estimation_source(frame)
     assert_primary_outcome(PRIMARY_OUTCOME)
     subset = subset_for_estimand(frame, PRIMARY_OBSERVATIONAL).reset_index(drop=True)
     if not subset["mathGrp"].eq(subset["mathSel"]).all():

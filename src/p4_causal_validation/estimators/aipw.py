@@ -12,7 +12,7 @@ import numpy as np
 import statsmodels.api as sm
 from sklearn.model_selection import KFold
 
-from p4_causal_validation.diagnostics.overlap import overlap_summary
+from p4_causal_validation.diagnostics.overlap import effective_sample_size, overlap_summary
 from p4_causal_validation.estimators.common import (
     EstimateResult,
     as_float_array,
@@ -42,6 +42,26 @@ def apply_numerical_floor(propensity, floor: float = NUMERICAL_FLOOR) -> tuple[n
     floored = np.clip(probability, floor, 1.0 - floor)
     moved = int(np.sum(probability != floored))
     return floored, moved
+
+
+def ate_influence_scores(y, treatment, mu1, mu0, propensity) -> np.ndarray:
+    """Standard AIPW scores for the average treatment effect.
+
+    psi = (mu1 - mu0) + D (Y - mu1) / e - (1 - D) (Y - mu0) / (1 - e)
+
+    e is clipped to [1e-6, 1-1e-6] so the ratio is defined. The clip does not
+    delete rows and is not a scientific trim.
+    """
+    outcome = as_float_array(y)
+    assignment = as_treatment(treatment)
+    treated_mean = as_float_array(mu1)
+    control_mean = as_float_array(mu0)
+    probability, _moved = apply_numerical_floor(propensity)
+    if not (outcome.shape == assignment.shape == treated_mean.shape == control_mean.shape == probability.shape):
+        raise ValueError("ATE score inputs must have the same length.")
+    return (treated_mean - control_mean) + assignment * (outcome - treated_mean) / probability - (
+        1.0 - assignment
+    ) * (outcome - control_mean) / (1.0 - probability)
 
 
 def att_influence_scores(y, treatment, mu0, propensity, treated_share: float) -> np.ndarray:
@@ -277,9 +297,7 @@ def crossfit_aipw(
         d_test = test_assignment
         y_test = outcome_values[test_index]
         if weight_type == "ate":
-            scores[test_index] = (mu1 - mu0) + d_test * (y_test - mu1) / floored - (1.0 - d_test) * (y_test - mu0) / (
-                1.0 - floored
-            )
+            scores[test_index] = ate_influence_scores(y_test, d_test, mu1, mu0, floored)
         else:
             scores[test_index] = att_influence_scores(y_test, d_test, mu0, floored, treated_share)
         out_of_fold_propensity[test_index] = floored
@@ -292,6 +310,47 @@ def crossfit_aipw(
     estimate = float(scores.mean())
     se = float(np.std(scores, ddof=1) / np.sqrt(scores.size))
     overlap = overlap_summary(out_of_fold_propensity, assignment, OVERLAP_REPORT_LOW, OVERLAP_REPORT_HIGH)
+    att_control_weights = None
+    ate_arm_weights = None
+    if weight_type == "ate":
+        treated_mask = assignment == 1
+        control_mask = assignment == 0
+        treated_weights = 1.0 / out_of_fold_propensity[treated_mask]
+        control_weights = 1.0 / (1.0 - out_of_fold_propensity[control_mask])
+        treated_ess = effective_sample_size(treated_weights)
+        control_ess = effective_sample_size(control_weights)
+        ate_arm_weights = {
+            "definition": "1/e on treated rows and 1/(1-e) on control rows, using the numerical-floor out-of-fold propensity",
+            "n_treated": int(treated_mask.sum()),
+            "n_control": int(control_mask.sum()),
+            "treated_ess": float(treated_ess),
+            "control_ess": float(control_ess),
+            "treated_ess_over_n": float(treated_ess / int(treated_mask.sum())),
+            "control_ess_over_n": float(control_ess / int(control_mask.sum())),
+            "treated_sum_weights": float(np.sum(treated_weights)),
+            "control_sum_weights": float(np.sum(control_weights)),
+            "treated_max_weight": float(np.max(treated_weights)),
+            "control_max_weight": float(np.max(control_weights)),
+            "n_nonfinite": int(np.sum(~np.isfinite(treated_weights)) + np.sum(~np.isfinite(control_weights))),
+            "n_negative": int(np.sum(treated_weights < 0) + np.sum(control_weights < 0)),
+        }
+    if weight_type == "att":
+        control_mask = assignment == 0
+        control_propensity = out_of_fold_propensity[control_mask]
+        control_weights = control_propensity / (1.0 - control_propensity)
+        ess = effective_sample_size(control_weights)
+        att_control_weights = {
+            "definition": "e/(1-e) using the numerical-floor out-of-fold propensity on control rows",
+            "n_control": int(control_mask.sum()),
+            "ess": float(ess),
+            "ess_over_n_control": float(ess / int(control_mask.sum())),
+            "sum_weights": float(np.sum(control_weights)),
+            "sum_squared_weights": float(np.sum(control_weights**2)),
+            "max_weight": float(np.max(control_weights)),
+            "median_weight": float(np.median(control_weights)),
+            "n_nonfinite": int(np.sum(~np.isfinite(control_weights))),
+            "n_negative": int(np.sum(control_weights < 0)),
+        }
     result = EstimateResult(
         estimand=estimand,
         estimator=f"crossfit_aipw_{weight_type}_linear",
@@ -328,6 +387,11 @@ def crossfit_aipw(
             "fold_id": [int(value) for value in fold_id.tolist()],
             "fold_summaries": fold_summaries,
             "overlap_report": overlap,
+            "att_control_weights": att_control_weights,
+            "ate_arm_weights": ate_arm_weights,
+            "out_of_fold_propensity": (
+                [float(value) for value in out_of_fold_propensity.tolist()] if weight_type == "ate" else None
+            ),
         },
     )
     validate_result(result)

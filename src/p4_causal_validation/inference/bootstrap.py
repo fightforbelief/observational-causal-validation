@@ -102,6 +102,31 @@ def _drawn_frame(frame: pd.DataFrame, positions: np.ndarray, local_draw: np.ndar
     return part
 
 
+def _public_point(point) -> dict:
+    diagnostics = getattr(point, "diagnostics", {}) or {}
+    return {
+        "estimand": point.estimand,
+        "estimate": float(point.estimate),
+        "se": float(point.se),
+        "normal_interval_low": float(point.ci_low),
+        "normal_interval_high": float(point.ci_high),
+        "n": int(point.n),
+        "n_treated": int(point.n_treated),
+        "n_control": int(point.n_control),
+        "warnings": [str(item) for item in getattr(point, "warnings", ())],
+        "rows_deleted_for_overlap": diagnostics.get("rows_deleted_for_overlap"),
+        "numerical_floor": diagnostics.get("numerical_floor"),
+        "n_probabilities_moved_by_floor": diagnostics.get("n_probabilities_moved_by_floor"),
+        "scientific_trimming": diagnostics.get("scientific_trimming"),
+        "overlap_report": diagnostics.get("overlap_report"),
+        "att_control_weights": diagnostics.get("att_control_weights"),
+        "covariates": diagnostics.get("covariates"),
+        "fold_summaries": diagnostics.get("fold_summaries"),
+        "normal_interval_is_not_the_bootstrap_interval": True,
+        "score_se_holds_treated_share_fixed": diagnostics.get("treated_share_held_fixed_in_score_se"),
+    }
+
+
 def stratified_primary_contrast_bootstrap(
     frame: pd.DataFrame,
     *,
@@ -110,6 +135,8 @@ def stratified_primary_contrast_bootstrap(
     randomized_estimand: str = "RCT_effect_prefer_math",
     observational_estimand: str = "QED_concordant_ATT",
     observer: Callable[[dict], None] | None = None,
+    authorized_real_run: bool = False,
+    failure_rule_approved: bool = False,
 ) -> dict:
     """Conditional cell bootstrap for the primary RCT-minus-QED contrast.
 
@@ -127,7 +154,10 @@ def stratified_primary_contrast_bootstrap(
         )
     if n_replicates < 2:
         raise ValueError("Bootstrap needs at least 2 replicates.")
-    spec.assert_synthetic_fixture(frame)
+    if authorized_real_run:
+        spec.assert_authorized_real_frame(frame)
+    else:
+        spec.assert_synthetic_fixture(frame)
     if "row_id" not in frame.columns or frame["row_id"].isna().any() or frame["row_id"].duplicated().any():
         raise DataContractError(
             "Stratified bootstrap requires unique non-missing row_id values on the source frame. "
@@ -158,8 +188,14 @@ def stratified_primary_contrast_bootstrap(
         g4 = _drawn_frame(frame, cells["G4"], g4_draw)
         rct_frame = pd.concat([g1, g2], ignore_index=True)
         qed_frame = pd.concat([g1, g4], ignore_index=True)
-        rct_frame.attrs["source"] = spec.SYNTHETIC_SOURCE
-        qed_frame.attrs["source"] = spec.SYNTHETIC_SOURCE
+        if authorized_real_run:
+            rct_frame.attrs["source"] = spec.AUTHORIZED_REAL_SOURCE
+            qed_frame.attrs["source"] = spec.AUTHORIZED_REAL_SOURCE
+            rct_frame.attrs["real_execution_authorized"] = True
+            qed_frame.attrs["real_execution_authorized"] = True
+        else:
+            rct_frame.attrs["source"] = spec.SYNTHETIC_SOURCE
+            qed_frame.attrs["source"] = spec.SYNTHETIC_SOURCE
         if len(rct_frame) != counts["G1"] + counts["G2"] or len(qed_frame) != counts["G1"] + counts["G4"]:
             raise RuntimeError("A bootstrap replicate changed a primary cell count.")
         g1_ids = g1["row_id"].tolist()
@@ -215,7 +251,7 @@ def stratified_primary_contrast_bootstrap(
         raise RuntimeError("Bootstrap replicate accounting does not match the requested count.")
     rule_met = confirmatory_interval_rule_met(n_replicates, len(successes), len(failures))
     result = {
-        "not_a_wsc_result": True,
+        "not_a_wsc_result": not authorized_real_run,
         "resampling": "stratified with replacement inside G1, G2, and G4; cell sizes held fixed; one shared G1 draw",
         "conditioning": "cell counts fixed at the observed sample sizes; this is not an iid redraw of all 2200 rows",
         "g3_in_primary_estimators": False,
@@ -234,11 +270,11 @@ def stratified_primary_contrast_bootstrap(
         "failure_share_threshold": None,
         "failure_share_threshold_status": "not_applicable_zero_failure_rule_is_not_a_numeric_share",
         "confirmatory_failure_rule": "all_2000_requested_replicates_succeed",
-        "confirmatory_interval_authorized": rule_met,
-        "interval_is_not_a_confirmatory_interval": not rule_met,
+        "confirmatory_interval_authorized": bool(rule_met and authorized_real_run),
+        "interval_is_not_a_confirmatory_interval": not (rule_met and authorized_real_run),
         "zero_failure_rule_does_not_authorize_real_wsc": True,
-        "real_wsc_execution_authorized": False,
-        "machine_approval_of_failure_rule": False,
+        "real_wsc_execution_authorized": bool(authorized_real_run),
+        "machine_approval_of_failure_rule": bool(authorized_real_run and failure_rule_approved),
         "fixed_cell_bootstrap_is_not_randomization_inference": True,
         "bootstrap_does_not_test_unmeasured_confounding": True,
         "cell_counts": counts,
@@ -255,6 +291,8 @@ def stratified_primary_contrast_bootstrap(
         "interval_overlap_is_not_equivalence": True,
         "interval_uses_only_successful_replicates": True,
     }
+    result["rct_point"] = _public_point(point_rct)
+    result["qed_point"] = _public_point(point_qed)
     if len(successes) >= 2:
         differences = np.array([item["difference_qed_minus_rct"] for item in successes], dtype=float)
         rct_draws = np.array([item["rct_estimate"] for item in successes], dtype=float)
@@ -267,11 +305,12 @@ def stratified_primary_contrast_bootstrap(
         result["percentile_ci_low"] = low
         result["percentile_ci_high"] = high
         result["bootstrap_covariance"] = float(np.cov(rct_draws, qed_draws, ddof=1)[0, 1])
-        result["interval_status"] = (
-            "zero_failure_rule_met_this_is_not_a_real_wsc_result"
-            if rule_met
-            else "diagnostic_only_zero_failure_rule_not_met"
-        )
+        if rule_met and authorized_real_run:
+            result["interval_status"] = "zero_failure_rule_met"
+        elif rule_met:
+            result["interval_status"] = "zero_failure_rule_met_this_is_not_a_real_wsc_result"
+        else:
+            result["interval_status"] = "diagnostic_only_zero_failure_rule_not_met"
     else:
         result["bootstrap_se"] = None
         result["percentile_ci_low"] = None

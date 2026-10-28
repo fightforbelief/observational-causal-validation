@@ -188,8 +188,16 @@ def test_secondary_interfaces_do_not_fit_and_skip_atu():
         secondary_subset(frame, "QED_concordant_ATU")
 
 
-def test_confirmatory_entry_still_refuses(monkeypatch):
-    monkeypatch.setattr("sys.argv", ["wsc_confirmatory", "--config", "configs/confirmatory_template.yaml"])
+def test_confirmatory_entry_still_refuses(monkeypatch, tmp_path):
+    protocol = tmp_path / "protocol.yaml"
+    protocol.write_text("status: frozen\n", encoding="utf-8")
+    missing = tmp_path / "missing_approval.json"
+    config = tmp_path / "config.yaml"
+    config.write_text(
+        f"protocol_path: '{protocol}'\napproval_path: '{missing}'\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("sys.argv", ["wsc_confirmatory", "--config", str(config)])
     with pytest.raises(SystemExit, match="approval file is absent"):
         confirmatory_main()
     monkeypatch.setattr(

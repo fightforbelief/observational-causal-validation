@@ -1,6 +1,9 @@
-status: locked_pending_owner_approval
+status: execution_requires_approval_file_and_decision_record
 protocol_path: configs/frozen_protocol.yaml
 approval_path: configs/OWNER_APPROVAL.json
+decision_record_path: configs/OWNER_DECISION_RECORD.json
+data_path: 'C:\Users\hanqi\Desktop\projects\_p4_external_sources\cran\WSCdata_0.1.2_extract\WSCdata\data\WSCdata.rda'
+expected_data_sha256: b47be7d8f2c0d54af9cc71f3602183e61307a964e701a2cdcf3944bcef85286b
 primary_outcome: mathPost
 primary_estimand: RCT_effect_prefer_math
 seed: 20261026

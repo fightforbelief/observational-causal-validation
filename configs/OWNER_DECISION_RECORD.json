@@ -1,0 +1,19 @@
+{
+  "approver": "Hanqing Yang",
+  "decision_date": "2026-10-27",
+  "protocol_sha256": "583ff75e5e848e4c1831e6dbc6084041afec44c5a18a4806d31db6f3d5564e59",
+  "frozen_protocol": "configs/frozen_protocol.yaml",
+  "joint_bootstrap": "approved",
+  "zero_failure_rule": "approved",
+  "real_primary_execution": "authorized",
+  "execution_scope": "primary RCT_effect_prefer_math and QED_concordant_ATT on mathPost, plus the prespecified 2000-replicate joint bootstrap",
+  "l3_authorized": false,
+  "secondary_estimands_authorized": false,
+  "zero_failure_rule_does_not_authorize_real_wsc": true,
+  "implementation_sha256": {
+    "src/p4_causal_validation/inference/bootstrap.py": "8fd6140f581d848233ecbe51a1f1a6fb85bc3688a73eaef76d3f09c74a36219a",
+    "src/p4_causal_validation/estimators/aipw.py": "f841b9d28255a984997b2c2418ec43e97b69dbf2bbe966137bddd306f6683b16",
+    "src/p4_causal_validation/experiments/primary_specification.py": "98a9ad0113fdb4d48040912fedf468f3dee5908928ffaed2875f93db9341b9e0",
+    "src/p4_causal_validation/experiments/approval.py": "0d0d1d6df0c5c994f3eb80974c4fa531398e81524c7155ffdd1008b12d6dc1a2"
+  }
+}
