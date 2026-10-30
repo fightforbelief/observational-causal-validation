@@ -1,0 +1,312 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[round]{natbib}
+\usepackage[hidelinks]{hyperref}
+
+\newtheorem{proposition}{Proposition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\title{Estimand Alignment in a Four-Arm Within-Study Comparison:\\
+A Concordant-Population Benchmark and a Decomposition of\\
+Observational--Experimental Discrepancies}
+\author{Hanqing Yang}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A within-study comparison is informative only when the randomized benchmark and the observational estimator refer to the same causal estimand, and only when that agreement is separated from the further question of whether the observational functional is identified. This paper studies both questions in the four-arm mathematics-and-vocabulary design of \citet{keller2025}. Preference was recorded before assignment. Under the published description of the randomization, a concordant-population average treatment effect can be constructed from the two preference-group effects for any common assignment probability strictly between zero and one. Equality of that benchmark with the full-population average treatment effect holds if and only if the assignment probability is one half or the two preference-group effects are equal. In the public sample of 2{,}200 participants, the prespecified comparison for mathematics post-test scores aligns the randomized effect among mathematics-preferring participants with a cross-fitted augmented inverse-probability-weighted average treatment effect on the treated in the concordant subset. The estimates are 0.795 and 0.794. Their difference is $-0.00045$, and the prespecified 2{,}000-replicate percentile interval is $[-0.949,\,0.664]$. The point estimates are close. The interval leaves room for large discrepancies in either direction. A finite-sample decomposition of the full-sample observational-minus-randomized discrepancy, 0.315 points, assigns 0.288 to the gap between the observational average treatment effect and the concordant benchmark, $-0.00016$ to estimand composition, and 0.027 to the difference between a post-stratified randomized benchmark and the unadjusted full-sample difference in means. The composition term is precisely estimated only because its preference-weight factor is fixed and small. The gap from the concordant benchmark has a percentile interval of approximately $[-0.63,\,1.07]$ and is not a pure measure of confounding. The primary result is a bounded, estimand-aligned comparison with wide uncertainty. It is not evidence that the observational procedure recovered the randomized effect.
+\end{abstract}
+
+\noindent\textbf{Keywords:} within-study comparison; estimand alignment; concordant population; average treatment effect; average treatment effect on the treated; cross-fitting.
+
+\section{Introduction}
+\label{sec:intro}
+
+Within-study comparisons place a randomized estimate and a nonrandomized estimate in one empirical setting, so that differences of site, intervention, or outcome instrument are less available as explanations for a discrepancy \citep{keller2025}. The comparison still has to say which causal parameter each estimate targets. A randomized contrast among people who preferred treatment, an average effect in the subset whose assignment matched their preference, and an average effect in the full sample can all be well defined and still be different parameters. Calling every gap between an observational estimate and a randomized estimate ``bias'' collapses three separate ideas: whether two estimands are the same, whether an observational functional identifies its target, and how precisely either quantity is estimated.
+
+The public four-arm study of \citet{keller2025} makes that distinction concrete. Participants stated a preference for a mathematics or a vocabulary session. They were then assigned to one of the two sessions. The published design description states that this assignment was completely at random, with probability one half, and independent of preference and of the potential outcomes. The subset in which assignment matches preference is the concordant population. Inside that subset, the people assigned to mathematics are exactly the people who preferred mathematics, and the people assigned to vocabulary are exactly the people who preferred vocabulary. The design therefore supplies randomized benchmarks for the preference-group effects and for a preference-weighted effect in the concordant population. Those benchmarks are design facts about estimands. They do not, by themselves, justify an observational analysis that uses only the concordant subset and adjusts for covariates. In that subset, treatment and preference are the same variable, so conditional exchangeability is an assumption about self-selection.
+
+This paper asks three questions. First, how can the four-arm design construct a randomized benchmark for the treatment effect in the concordant population? Second, how does that benchmark relate to the average treatment effect in the full population? Third, how should a numerical discrepancy between an observational estimator and a randomized estimator be read when the estimands, the populations, and the estimation procedures are not the same?
+
+The empirical analysis uses the public sample of 2{,}200 participants and the mathematics post-test. The primary comparison was specified before those estimates were examined. It pairs the randomized difference in means among mathematics-preferring participants with a cross-fitted augmented inverse-probability-weighted estimator of the average treatment effect on the treated in the concordant subset \citep{bang2005,chernozhukov2018}. A later decomposition then separates the discrepancy between a concordant observational average treatment effect and the unadjusted full-sample randomized difference in means into an observational-minus-benchmark gap, an estimand-composition term, and a term that compares two randomized estimators. Cross-fitting seeds, an alternative randomized estimator, covariate subsets, an inverse-probability sensitivity bound, and overlap restrictions are reported as exploratory analyses.
+
+The contribution is interpretive and empirical, not a new estimator. The concordant-population benchmark can be formed for any common assignment probability strictly between zero and one. Its equivalence to the full-population average treatment effect is a population identity that still requires either assignment probability one half or equal preference-group effects. In this sample the primary point estimates nearly agree, while the prespecified uncertainty interval does not support a claim of recovery, equivalence, or negligible confounding. The decomposition shows that estimand composition is negligible in the observed sample for a mechanical reason, and that this fact does not identify the observational average treatment effect.
+
+\section{Study design and data}
+\label{sec:design}
+
+Let $S\in\{0,1\}$ denote preference for the mathematics session, and let $D\in\{0,1\}$ denote randomized assignment to that session. The concordant population is $C=\{D=S\}$. The four realized cells are G1, $(S,D)=(1,1)$; G2, $(1,0)$; G3, $(0,1)$; and G4, $(0,0)$. Table~\ref{tab:cells} gives the counts in the public file: 288, 319, 776, and 817. Mathematics assignment was realized for $288+776=1{,}064$ participants and vocabulary assignment for $319+817=1{,}136$. The analysis sample is the released WSCdata file of $N=2{,}200$ rows described by \citet{keller2025}. The outcome throughout is the mathematics post-test, \texttt{mathPost}. Vocabulary outcomes are not analyzed.
+
+\begin{table}[t]
+\centering
+\caption{Realized four-arm cells. $S$ is preference for mathematics and $D$ is assignment to mathematics.}
+\label{tab:cells}
+\begin{tabular}{llrr}
+\toprule
+Cell & Definition & Role in $C=\{D=S\}$ & $n$ \\
+\midrule
+G1 & $S=1$, $D=1$ & Concordant, assigned mathematics & 288 \\
+G2 & $S=1$, $D=0$ & Discordant & 319 \\
+G3 & $S=0$, $D=1$ & Discordant & 776 \\
+G4 & $S=0$, $D=0$ & Concordant, assigned vocabulary & 817 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Under the published description of the WSC randomization design, preference was elicited before assignment, and assignment was then made regardless of preference \citep{keller2025}. The same description states that assignment was completely at random with probability one half and writes the assignment indicator as independent of preference and of the two potential outcomes. It does not describe stratification or blocking on preference. The assignment program itself was not inspected for this paper. The package documentation identifies the randomized indicator and the four-arm coding; it does not state the assignment probability. The realized split $1{,}064/2{,}200$ is not a fixed equal division of the sample, and it is compatible with independent assignment at probability one half. That split is not evidence that the design probability differed from one half.
+
+The primary randomized contrast uses G1 and G2, the two cells with $S=1$. The primary observational contrast uses the concordant subset G1$\cup$G4, which contains $1{,}105$ participants. The full-sample randomized difference in means uses all four cells. The preference-group effect for $S=0$ uses G3 and G4. These are different samples, and the parameters attached to them are defined in the next section before any estimator is introduced.
+
+\section{Causal estimands}
+\label{sec:theory}
+
+Let $Y(1)$ and $Y(0)$ denote the potential mathematics post-test outcomes under assignment to mathematics and to vocabulary. The preference-group effects, the full-population average treatment effect, and the concordant-population effect are
+\begin{align*}
+\tau_s &= E[Y(1)-Y(0)\mid S=s], \qquad s\in\{0,1\},\\
+\tau_{\mathrm{full}} &= E[Y(1)-Y(0)],\\
+\tau_C &= E[Y(1)-Y(0)\mid C].
+\end{align*}
+Write $p=P(D=1)$, $\pi=P(S=1)$, and $\pi_c=P(S=1\mid C)$. The average treatment effect on the treated in the usual selection sense is $E[Y(1)-Y(0)\mid S=1]=\tau_1$, because the people who prefer mathematics are the people who would be treated under self-selection. Likewise $\tau_0$ is the average treatment effect on the untreated. Inside $C$, those two parameters are also the effects in the assigned-treated and assigned-untreated concordant strata.
+
+The design assumptions used for the population identities are the following.
+
+\begin{enumerate}
+\item \textbf{Random assignment.} $D\perp\bigl(S,Y(1),Y(0)\bigr)$, with a common assignment probability $0<p<1$ in both preference groups.
+\item \textbf{Both preferences occur.} $0<\pi<1$.
+\item \textbf{Consistency and no interference.} The observed outcome equals the potential outcome under the realized assignment; there is one treatment version; and one participant's assignment does not change another's potential outcomes. The further statement that randomized assignment and self-selection implement the same treatment version is part of this assumption. It is not implied by independence of $D$.
+\end{enumerate}
+
+Assumption~1 is the content of the published randomization description. Assumption~3 is stated separately by \citet{keller2025} and is retained here as an assumption. The identities in Proposition~\ref{prop:concordant} use Assumptions~1 and~2. They are statements about potential-outcome estimands. Consistency is what connects those estimands to contrasts of observed outcomes.
+
+\begin{proposition}
+\label{prop:concordant}
+Under Assumptions~1 and~2,
+\begin{align}
+\pi_c
+&=
+\frac{\pi p}{\pi p+(1-\pi)(1-p)},
+\label{eq:pic}\\
+E[Y(1)-Y(0)\mid D=1,\,C]
+&=
+\tau_1,
+\label{eq:att}\\
+E[Y(1)-Y(0)\mid D=0,\,C]
+&=
+\tau_0,
+\label{eq:atu}\\
+\tau_C
+&=
+\pi_c\tau_1+(1-\pi_c)\tau_0,
+\label{eq:tauc}\\
+\tau_C-\tau_{\mathrm{full}}
+&=
+(\pi_c-\pi)(\tau_1-\tau_0).
+\label{eq:gap}
+\end{align}
+Consequently,
+\begin{equation}
+\tau_C=\tau_{\mathrm{full}}
+\quad\Longleftrightarrow\quad
+p=\tfrac12
+\quad\text{or}\quad
+\tau_1=\tau_0.
+\label{eq:iff}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Independence of $D$ and $S$ gives $P(S=1,D=1)=\pi p$ and $P(S=0,D=0)=(1-\pi)(1-p)$. The event $C$ is the disjoint union of these two cells, so \eqref{eq:pic} is the definition of $\pi_c$. The event $\{D=1\}\cap C$ equals $\{D=1,S=1\}$. Independence of $D$ and $(Y(1),Y(0))$ given $S=1$ therefore yields \eqref{eq:att}, and the symmetric argument yields \eqref{eq:atu}. Conditioning further on $S$ inside $C$,
+\[
+\tau_C
+=
+E[Y(1)-Y(0)\mid S=1,\,C]\,\pi_c
++
+E[Y(1)-Y(0)\mid S=0,\,C]\,(1-\pi_c).
+\]
+The two conditional expectations are $\tau_1$ and $\tau_0$, which is \eqref{eq:tauc}. The full-population effect has the same two building blocks with weights $(\pi,1-\pi)$,
+\[
+\tau_{\mathrm{full}}=\pi\tau_1+(1-\pi)\tau_0,
+\]
+and this decomposition uses only the law of total expectation. Subtracting it from \eqref{eq:tauc} gives \eqref{eq:gap}. Finally,
+\[
+\pi_c-\pi
+=
+\frac{\pi(1-\pi)(2p-1)}{\pi p+(1-\pi)(1-p)}.
+\]
+The denominator is positive under Assumptions~1 and~2, and $\pi(1-\pi)>0$, so $\pi_c=\pi$ if and only if $p=1/2$. Combined with \eqref{eq:gap}, this is \eqref{eq:iff}.
+\end{proof}
+
+Equation~\eqref{eq:iff} is a population identity. It does not say that an estimator of $\tau_C$ is close to an estimator of $\tau_{\mathrm{full}}$ in a finite sample, and it does not identify either parameter from an observational likelihood. The concordant benchmark $\tau_C$ can be assembled from $\tau_1$ and $\tau_0$ without first estimating $p$, because a randomized contrast within $S=1$ targets $\tau_1$ and a randomized contrast within $S=0$ targets $\tau_0$ at whatever common $p$ generated the assignment. Replacing $\tau_C$ by $\tau_{\mathrm{full}}$ is the step that uses $p=1/2$ or homogeneity.
+
+Identification of the same parameters from the observational concordant sample is a different claim. In $C$, the observed treatment indicator is $S$. A covariate-adjusted estimator computed on G1$\cup$G4 therefore identifies $\tau_1$, $\tau_0$, or $\tau_C$ only under additional conditions: conditional exchangeability of preference with the potential outcomes given the covariates, positivity of preference given those covariates, and the treatment-version statement in Assumption~3. Randomization of $D$ does not establish conditional exchangeability of $S$. Conditioning on $C$ changes the target population, because $\pi_c$ need not equal $\pi$. It does not create a second treatment version. Whether the randomized session and the session a participant would have self-selected are the same intervention remains an assumption.
+
+\section{Estimation and inference}
+\label{sec:estimation}
+
+The randomized building blocks are unadjusted differences in means. For a binary assignment indicator and an observed outcome, the estimator is the treated mean minus the control mean, with the usual two-sample standard error formed from the two sample variances. Applied to G1 versus G2, this estimates $\tau_1$. Applied to G3 versus G4, it estimates $\tau_0$. Applied to all $2{,}200$ rows, it estimates the full-sample average effect of assignment. The sample assignment proportion is left as realized; the full-sample estimator is not reweighted to one half. Write $\widehat\tau_1$, $\widehat\tau_0$, and $\widehat\tau^{\mathrm{RCT}}_{\mathrm{full,DM}}$ for these three statistics, and write $\widehat\pi=607/2200$ and $\widehat\pi_c=288/1105$ for the realized preference weight and the realized concordant preference weight. The plug-in benchmarks are
+\begin{align*}
+\widehat\tau_C
+&=
+\widehat\pi_c\,\widehat\tau_1+(1-\widehat\pi_c)\,\widehat\tau_0,\\
+\widehat\tau_{\mathrm{ps}}
+&=
+\widehat\pi\,\widehat\tau_1+(1-\widehat\pi)\,\widehat\tau_0.
+\end{align*}
+The first is the finite-sample concordant benchmark. The second is the preference-post-stratified full-sample benchmark. Their difference equals $(\widehat\pi_c-\widehat\pi)(\widehat\tau_1-\widehat\tau_0)$.
+
+The observational estimator in the concordant subset is a five-fold cross-fit augmented inverse-probability-weighted functional \citep{bang2005,chernozhukov2018}. The propensity score is the conditional probability of mathematics assignment given covariates \citep{rosenbaum1983}. In $C$ that event coincides with preference for mathematics. The nuisance functions are an unpenalized logistic regression for the propensity score and linear regressions for the outcome in each arm. Out-of-fold predictions are clipped to $[10^{-6},\,1-10^{-6}]$, and no row is deleted because of the estimated propensity score. Preference is not used as a covariate. The adjustment set has 25 baseline variables: demographics and schooling, the two pre-tests, mathematics motivation and anxiety measures, and personality and related psychological scales. The primary functional is the average treatment effect on the treated, evaluated on G1$\cup$G4, so that its randomized counterpart is $\tau_1$. The cross-fitting seed for that prespecified fit is fixed. The analytic standard error reported with the primary observational estimate is the standard deviation of the cross-fit scores divided by the square root of the concordant sample size. That standard error does not repeat the nuisance-function fit inside a resampling distribution.
+
+The prespecified uncertainty statement for the primary contrast is a paired bootstrap. Each of 2{,}000 replicates redraws G1, G2, and G4 with replacement at their observed sizes, holds out G3, uses the same G1 draw in the randomized and observational estimators, refits the observational nuisance functions, and records the observational estimate minus $\widehat\tau_1$. All 2{,}000 replicates produced an estimate. The reported interval is the 2.5th and 97.5th percentiles of those 2{,}000 differences. This interval is the primary inferential result. A later implementation used a different random-number stream, redrew all four cells, and produced a different percentile interval for the same contrast. That calculation is reported in the supplement as an implementation check. It does not replace the prespecified interval.
+
+The decomposition in Section~\ref{sec:results} uses one joint redraw of all four cells, again at the observed cell sizes, with every estimator recomputed on the same redraw and with failed replicates retained rather than replaced. In that bootstrap the cell sizes, and therefore $\widehat\pi$ and $\widehat\pi_c$, stay fixed. The procedure conditions on the observed design margins. It is not a rerandomization test, and it does not estimate the sampling distribution that would arise if the preference counts were redrawn from a superpopulation. Component intervals from this bootstrap are secondary. They are attached to the decomposition, not to the primary contrast.
+
+An algebraic identity organizes the full-sample discrepancy. Let $\widehat\tau^{\mathrm{QED}}_{\mathrm{ATE}}$ denote the cross-fit augmented inverse-probability-weighted average treatment effect on G1$\cup$G4. Then
+\begin{equation}
+\begin{aligned}
+\widehat\tau^{\mathrm{QED}}_{\mathrm{ATE}}
+-
+\widehat\tau^{\mathrm{RCT}}_{\mathrm{full,DM}}
+={}&
+\bigl(\widehat\tau^{\mathrm{QED}}_{\mathrm{ATE}}-\widehat\tau_C\bigr)
++
+\bigl(\widehat\tau_C-\widehat\tau_{\mathrm{ps}}\bigr)
++
+\bigl(\widehat\tau_{\mathrm{ps}}
+-
+\widehat\tau^{\mathrm{RCT}}_{\mathrm{full,DM}}\bigr).
+\end{aligned}
+\label{eq:decomposition}
+\end{equation}
+The first term compares the observational average treatment effect with the concordant randomized benchmark. It mixes sampling error, outcome-model and propensity-model error, and whatever selection bias remains after adjustment. The second term is estimand composition: the concordant benchmark uses $\widehat\pi_c$, while the post-stratified benchmark uses $\widehat\pi$. The third term compares two randomized estimators of full-population quantities, the post-stratified combination of preference-group differences in means and the unadjusted full-sample difference in means. None of the three terms is, by itself, a confirmed causal bias.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Prespecified primary comparison}
+
+Table~\ref{tab:primary} reports the primary pair. Among the 607 mathematics-preferring participants, the randomized difference in means is 0.795 points, with analytic standard error 0.278 and analytic normal interval $[0.250,\,1.339]$. In the concordant subset, the cross-fit observational estimator of the average treatment effect on the treated is 0.794, with score standard error 0.224 and analytic interval $[0.356,\,1.233]$. The observational estimate minus the randomized estimate is $-0.00045$. The prespecified percentile interval is $[-0.949,\,0.664]$, and the bootstrap standard deviation of the contrast is 0.422.
+
+\begin{table}[t]
+\centering
+\caption{Prespecified primary comparison for \texttt{mathPost}. For the first two rows, the standard error is analytic and the interval is the corresponding normal interval. For the contrast, the standard error is the standard deviation of the prespecified 2{,}000 bootstrap replicates and the interval is their percentile interval.}
+\label{tab:primary}
+\begin{tabular}{lrrrr}
+\toprule
+Estimand & Estimate & SE & 95\% interval & Sample \\
+\midrule
+Randomized $\tau_1$ (G1 vs.\ G2) & 0.795 & 0.278 & $[0.250,\,1.339]$ & 288 / 319 \\
+Observational ATT (G1$\cup$G4) & 0.794 & 0.224 & $[0.356,\,1.233]$ & 288 / 817 \\
+Observational minus randomized & $-0.00045$ & 0.422 & $[-0.949,\,0.664]$ & paired bootstrap \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The two point estimates agree through the third decimal place in this sample. The percentile interval covers differences on the order of the estimates themselves, in both directions. Agreement of the point estimates is therefore a feature of this draw and of this cross-fitting partition. It does not establish statistical equivalence, and it does not establish that covariate adjustment removed confounding. The score standard error, 0.224, is smaller than the bootstrap standard deviation because the score calculation holds the fitted nuisance functions fixed. Of the 1{,}105 concordant propensity scores, 396, or 35.8 percent, lie outside $[0.1,\,0.9]$. The effective sample size implied by the control-side weights is 145.9 of 817 controls, about 17.9 percent. Limited overlap is already visible in the primary fit, before any trimming rule is applied. No primary observation was deleted on an overlap rule.
+
+An independent reimplementation reproduced the two primary point estimates to within $1.3\times 10^{-15}$. Its own percentile interval for the contrast was approximately $[-0.925,\,0.661]$, with bootstrap standard deviation 0.470. The supplement states the exact values and the reasons the two resampling distributions differ. The interval in Table~\ref{tab:primary} remains the prespecified one.
+
+\subsection{Concordant average treatment effect}
+
+The concordant benchmark $\widehat\tau_C$ equals 0.787. The cross-fit observational average treatment effect on the same 1{,}105 participants equals 1.075. The difference is 0.288. In the four-cell bootstrap, the percentile interval for this difference is $[-0.634,\,1.073]$. This comparison is secondary. It lines up the observational average treatment effect with the estimand in \eqref{eq:tauc}, which is the appropriate randomized benchmark when the observational functional averages over the concordant population rather than over the treated concordant stratum. The interval includes zero and also includes values larger than one mathematics-test point. A point estimate of 0.288 is compatible with a small discrepancy and with a large one.
+
+The same observational average treatment effect minus the unadjusted full-sample randomized estimate is a different contrast. The two point estimates are 1.075 and 0.760, and the difference is 0.315. An earlier paired bootstrap for that full-sample contrast, with 2{,}000 successful replicates, gave percentile interval $[-0.625,\,1.144]$ and bootstrap standard deviation 0.458. Those figures belong to that earlier contrast. They are not replaced by the component intervals below. Because \eqref{eq:iff} requires $p=1/2$ or $\tau_1=\tau_0$ before $\tau_C$ and $\tau_{\mathrm{full}}$ are the same parameter, this full-sample contrast is not an estimand-aligned replication of the primary comparison.
+
+\subsection{Finite-sample decomposition}
+
+Table~\ref{tab:decomp} enters the three terms of \eqref{eq:decomposition} at the precision needed to check the sum. The observational average treatment effect is 1.0753974159 and the full-sample randomized difference in means is 0.7603449645. Their difference, 0.3150524514, equals
+\[
+0.2882422278 + (-0.0001555014) + 0.0269657250.
+\]
+The audited unrounded values satisfy the same identity with a numerical remainder of zero. Across the 2{,}000 joint bootstrap replicates, the largest absolute departure from the row-wise identity is $4.4\times 10^{-16}$.
+
+\begin{table}[t]
+\centering
+\caption{Finite-sample decomposition of the full-sample discrepancy. The three components sum to the total at the displayed precision. The percentile interval is from the four-cell bootstrap and conditions on the observed cell sizes.}
+\label{tab:decomp}
+\begin{tabular}{lr}
+\toprule
+Component & Value \\
+\midrule
+Observational ATE, $\widehat\tau^{\mathrm{QED}}_{\mathrm{ATE}}$ & 1.0753974159 \\
+Full-sample randomized difference in means & 0.7603449645 \\
+Total discrepancy & 0.3150524514 \\
+\midrule
+Observational ATE minus concordant benchmark, $\widehat\tau^{\mathrm{QED}}_{\mathrm{ATE}}-\widehat\tau_C$ & 0.2882422278 \\
+Estimand composition, $\widehat\tau_C-\widehat\tau_{\mathrm{ps}}$ & $-0.0001555014$ \\
+Post-stratified minus unadjusted randomized estimator & 0.0269657250 \\
+\midrule
+Concordant benchmark, $\widehat\tau_C$ & 0.7871551881 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The composition term equals $-0.0001555014$. Its percentile interval in the four-cell bootstrap is $[-0.009506,\allowbreak 0.009796]$. The bootstrap holds $\widehat\pi_c-\widehat\pi$ fixed at $-0.015276$, so the product stays small even when $\widehat\tau_1-\widehat\tau_0$ does not. Dividing the endpoints by this fixed negative weight reverses them and gives a conditional interval for $\widehat\tau_1-\widehat\tau_0$ of approximately $[-0.641,\,0.622]$. The point estimate of that difference is $0.010$. Homogeneity of the preference-group effects is not established.
+
+The third term, 0.027, is the gap between $\widehat\tau_{\mathrm{ps}}=0.787$ and the unadjusted full-sample difference in means, 0.760. Both are randomized calculations. The term records the finite-sample difference between post-stratifying on preference and taking the marginal difference in means. Its percentile interval, $[0.024,\,0.030]$, is also conditional on the fixed cell sizes, so it does not answer how large this gap would be under a new randomization.
+
+The leading term remains 0.288, with interval $[-0.634,\,1.073]$. That is the portion of the full-sample discrepancy that survives after the benchmark has been changed from the unadjusted full-sample average treatment effect to $\widehat\tau_C$. It is the term that would have to be interpreted as estimation error or selection bias, and the interval shows that the sample does not separate those sources. Equation~\eqref{eq:decomposition} is an accounting identity for estimators. It is not a proof that the observational functional is identified.
+
+\section{Exploratory analyses}
+\label{sec:exploratory}
+
+The analyses in this section were not part of the prespecified primary comparison. They use the same public sample after the primary estimates were known. Numerical detail, including the implementation-specific primary bootstrap, is in the Supplementary Material. Supplementary Figures~S1--S4 display the joint-bootstrap margins, the cross-fitting seeds, the nested covariate sets, and the sensitivity bounds.
+
+\subsection{Average treatment effect on the untreated}
+
+The randomized benchmark $\widehat\tau_0$ is 0.785. The cross-fit observational estimator of the corresponding untreated effect in the concordant subset is 1.175. The difference is 0.390, with four-cell percentile interval $[-0.755,\,1.479]$. The interval includes zero. The point estimates for the treated and untreated observational contrasts are asymmetric: the treated contrast is $-0.00045$ under the prespecified partition, whereas the untreated contrast is 0.390. That pattern is a description of the point estimates. The untreated interval is wide enough that the analysis does not establish a failure of the observational estimator for the untreated effect. The untreated weights are also more concentrated. Their effective sample size is 61.9 of 288 treated concordant participants, about 21.5 percent; the largest weight is 52.57; and the ten largest weights account for 31.3 percent of the total weight.
+
+\subsection{Cross-fitting partition}
+
+Repeating the observational fit at 200 fold seeds, on the same participants, moves the estimates. The median observational treated-effect estimate is 0.734. The absolute contrast with $\widehat\tau_1$ is below 0.01 for 11.5 percent of these seeds. The seed used in the prespecified analysis sits at the 77th percentile of the 200 treated-effect estimates. These seeds are alternative partitions of one sample. They are not 200 independent studies, and the 11.5 percent figure is not a probability of recovery in a new experiment. The calculation does show that the third-decimal agreement in Table~\ref{tab:primary} is sensitive to the fold assignment.
+
+\subsection{An alternative randomized estimator}
+
+A linear adjustment that interacts assignment with centered covariates, using an HC2 variance estimator, is a second randomized estimator of the same preference-group effects \citep{lin2013}. It produces $\widehat\tau_1=0.695$ and $\widehat\tau_0=0.810$, compared with 0.795 and 0.785 for the unadjusted differences in means. Both estimators are valid under the randomization. A finite-sample gap of about a tenth of a point does not impeach the unadjusted estimator that was specified for the primary comparison. It does limit any informal claim that the randomized benchmark is a single number known up to a few hundredths.
+
+\subsection{Covariate sets}
+
+Nested fits add demographics, pre-tests, mathematics-motivation measures, and the remaining psychological scales, and each observational estimate is summarized by its median over 50 fold seeds. With an empty covariate set, the treated, untreated, and average observational functionals return the same concordant difference in means, 3.451. Their discrepancies from the randomized benchmarks differ only because $\widehat\tau_1$, $\widehat\tau_0$, and $\widehat\tau_C$ differ. With the full set, the median discrepancies are $-0.056$, $0.425$, and $0.304$. Leaving out the mathematics pre-test raises the median treated estimate by 0.669 relative to the full-set median; leaving out mathematics liking raises it by 0.249. These are median changes across seeds. They line up with the long-standing finding that the pretreatment measures most closely tied to selection and to the outcome matter for observational adjustment \citep{steiner2010}. They do not isolate a confirmed share of selection bias, and they do not show that baseline mathematics and motivation have removed it. The full-set median treated estimate, 0.738, is also not the prespecified estimate 0.794. The seed used for Table~\ref{tab:primary} is one partition, not the median partition.
+
+\subsection{Marginal sensitivity bounds}
+
+A marginal sensitivity model tilts the odds of treatment, relative to the odds implied by the fitted propensity score, by at most a factor $\Lambda$ \citep{tan2006,zhao2019}. The reported bounds are worst-case bounds for a H{\'a}jek inverse-probability-weighted functional under that restriction. They are valid for that functional. They are not the sharp bounds available for inverse-probability weighting \citep{dorn2023}, and they are not bounds for the augmented inverse-probability-weighted estimator. At $\Lambda=1$, with no tilt, the inverse-probability-weighted treated estimate is 0.686 and the untreated estimate is 0.960. The augmented untreated estimate is 1.175, about 0.215 above the inverse-probability-weighted value, so a substantial part of the untreated point estimate is contributed by the outcome regression rather than by the weighted contrast alone.
+
+On a grid with steps of 0.01, the first $\Lambda$ at which the inverse-probability-weighted lower bound for the untreated effect falls to or below the randomized point estimate $\widehat\tau_0$ is $\Lambda=1.06$. That is a property of the grid and of the point bounds. At $\Lambda=1$ the point bounds do not cover the randomized point estimates, while percentile intervals for the bound endpoints do extend below them. At $\Lambda=1.10$ the point bounds cover the randomized points. The endpoint intervals are not confidence intervals for a causal parameter. The value 1.06 does not measure a quantity of unmeasured confounding that accounts for the augmented-estimator discrepancy.
+
+\subsection{Overlap and trimming}
+
+Trimming on the propensity score changes the population whose effect is being estimated \citep{crump2009}. Here the propensity score used to define regions was fit once on the concordant covariate distribution, without the outcome, and then applied to all 2{,}200 rows. The bootstrap for a trimmed region does not refit that trimming model. Under random assignment, the randomized and observational estimators on a region defined by covariates target a common restricted population, and that population is not the original one. In the region with scores in $[0.1,\,0.9]$, the randomized $\widehat\tau_0$ falls from 0.785 to 0.430, and the untreated observational contrast moves from 0.390 to 0.716. The Crump threshold selected on the concordant sample is $\alpha=0.084$, leaving 1{,}561 participants. These shifts are exploratory descriptions of different populations.
+
+The untrimmed row of that trimming exercise uses a separate 1{,}000-replicate bootstrap. Its interval for the treated contrast is approximately $[-1.004,\,0.682]$. That interval is not the primary interval in Table~\ref{tab:primary}, and it is not the 2{,}000-replicate implementation-check interval $[-0.925,\,0.661]$.
+
+\section{Discussion}
+\label{sec:discussion}
+
+The prespecified comparison answers a narrow version of the third question in the introduction. For the treated effect in this sample, the observational point estimate and the aligned randomized point estimate are 0.794 and 0.795. The uncertainty attached to their difference runs from roughly $-0.95$ to $0.66$. Close point estimates and a wide interval are the whole primary result. The interval is what blocks the stronger reading in which the observational procedure has recovered the randomized effect, shown equivalence, or shown that confounding is negligible.
+
+The first two questions are answered by Proposition~\ref{prop:concordant} and by the decomposition. A concordant-population benchmark is available from the two randomized preference-group contrasts for any common assignment probability in $(0,1)$. It equals the full-population average treatment effect only in the two cases stated in \eqref{eq:iff}. Under the published description of this design, the assignment probability is one half, so the population identity says that the two average treatment effects coincide. That statement remains tied to the published description: the assignment program was not inspected, and the realized treatment fraction is not a substitute for that inspection. Even if the population identity holds, the estimators in a finite sample differ. In this sample almost none of the 0.315-point full-sample discrepancy is estimand composition. The composition interval looks precise because $\widehat\pi_c-\widehat\pi$ is fixed at about $-0.015$, while the implied interval for $\tau_1-\tau_0$ still runs from about $-0.64$ to $0.62$. The accounting therefore does not say that estimand misalignment explains the discrepancy, and it does not say that the preference-group effects are homogeneous.
+
+What remains is the 0.288-point gap between the observational average treatment effect and $\widehat\tau_C$, with an interval from about $-0.63$ to $1.07$. Reading that gap as established confounding would require the observational functional to be identified and the estimation error to be negligible. The design does not provide the first of those, because conditional exchangeability of preference was not established, and the interval shows that the second is not available either. The same caution applies to the untreated contrast, where the point estimates differ by 0.390 and the interval includes zero. Asymmetry of the point estimates is visible. A conclusion that the estimator fails for the untreated effect is not.
+
+Precision is limited by the weights as well as by the bootstrap intervals. The primary treated comparison reweights 817 controls down to an effective sample size of about 146. The untreated comparison reweights 288 participants down to an effective sample size of about 62, with a maximum weight above 50. Trimming can improve the weight distribution only by changing the target population, and the trimmed randomized benchmarks move by several tenths of a point. Overlap diagnostics explain why the intervals are wide. They do not choose a new confirmatory estimand.
+
+Two further limits belong with the estimates themselves. The independent reimplementation reproduced the primary and secondary point estimates to numerical noise on the order of $10^{-15}$. It did not reconstruct the original execution step for step, and its bootstrap distribution for the primary contrast is not the same object as the prespecified bootstrap. The exploratory fits also show ordinary finite-sample sensitivity: another valid randomized estimator moves $\widehat\tau_1$ from 0.795 to 0.695, and other cross-fitting seeds move the observational treated estimate away from 0.794. Those facts qualify how sharp a single reported point estimate is. They do not replace Table~\ref{tab:primary}.
+
+The primary comparison was specified before the mathematics post-test estimates were examined. The concordant-benchmark decomposition was a subsequent analysis of estimand alignment. The untreated contrast, the seed sweep, the interacted randomized estimator, the covariate nests, the sensitivity grid, and the trimming regions were exploratory. This paper does not treat that full set of analyses as a single prespecified confirmation.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+In this four-arm within-study comparison, the randomized design identifies a concordant-population benchmark without requiring the analyst to estimate the assignment probability, and it identifies equality of that benchmark with the full-population average treatment effect only under an assignment probability of one half or homogeneous preference-group effects. The prespecified observational and randomized estimates of the treated effect are nearly identical in the released sample, and the prespecified interval for their difference is wide. A decomposition of the larger full-sample discrepancy assigns essentially none of it to estimand composition and leaves a wide interval around the remaining observational-minus-benchmark gap. Estimand alignment, observational identification, and statistical precision answer different questions. In this study they should be reported as different answers.
+
+\bibliographystyle{apalike}
+\bibliography{references}
+
+\end{document}
