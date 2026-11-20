@@ -1,0 +1,34 @@
+{
+ "sd_mathPost": 3.5626877226567943,
+ "sd_vocabPost": 4.097569556986138,
+ "mathPost_d_att": {
+  "lo_bonf": -1.501090937750218,
+  "hi_bonf": 1.0382791633257047,
+  "share_le_0": 0.626
+ },
+ "mathPost_d_atu": {
+  "lo_bonf": -1.6342248944690174,
+  "hi_bonf": 1.9036263325811436,
+  "share_le_0": 0.2135
+ },
+ "mathPost_d_ate_aligned": {
+  "lo_bonf": -1.2948533375063358,
+  "hi_bonf": 1.4329282310232963,
+  "share_le_0": 0.256
+ },
+ "vocabPost_d_att": {
+  "lo_bonf": -3.6621627265740773,
+  "hi_bonf": 3.3383901769986624,
+  "share_le_0": 0.4335
+ },
+ "vocabPost_d_atu": {
+  "lo_bonf": -0.19269805163411705,
+  "hi_bonf": 2.4133418243597724,
+  "share_le_0": 0.0135
+ },
+ "vocabPost_d_ate_aligned": {
+  "lo_bonf": -2.574915687148197,
+  "hi_bonf": 2.810788294859187,
+  "share_le_0": 0.2955
+ }
+}

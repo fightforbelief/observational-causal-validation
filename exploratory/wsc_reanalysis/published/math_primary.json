@@ -1,0 +1,14 @@
+{
+  "source_file": "P4_CONFIRMATORY_PRIMARY.json",
+  "source_sha256": "b58422a34283636674d6353ed44642ebb099ba5992cbaf66a0379efdf3546e8f",
+  "protocol_sha256": "583ff75e5e848e4c1831e6dbc6084041afec44c5a18a4806d31db6f3d5564e59",
+  "rct_estimate": 0.794681731104145,
+  "qed_estimate": 0.7942342079185714,
+  "difference_qed_minus_rct": -0.00044752318557361725,
+  "bootstrap_se": 0.4216686503551098,
+  "percentile_ci_low": -0.9491600721638183,
+  "percentile_ci_high": 0.6638487257328824,
+  "n_replicates": 2000,
+  "n_success": 2000,
+  "n_failed": 0
+}

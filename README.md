@@ -1,20 +1,35 @@
-# Observational causal validation
+# Estimand Alignment in a Four-Arm Within-Study Comparison
 
-Independent reproduction and validation study. This repository does not implement a new causal estimator.
+Yunjie Guo and Hanqing Yang · Independent Researcher, Suzhou, China
 
-The revised paper is [`paper.pdf`](paper.pdf). Source is in `manuscript/revision_20261030/`. Author: Hanqing Yang.
+[Article](paper.pdf) · [Supplement](manuscript/submission/supplementary_material.pdf) · [LaTeX source](manuscript/submission) · [Vocabulary analysis specification](exploratory/wsc_reanalysis/VOCAB_SPEC.md)
 
-The prespecified primary comparison on `mathPost` pairs the randomized effect among mathematics-preferring participants with a cross-fitted AIPW ATT in the concordant subset. The estimates are 0.794681731104145 and 0.7942342079185714. Their difference is -0.00044752318557361725. The prespecified 2,000-replicate percentile interval is [-0.9491600721638183, 0.6638487257328824]. The point estimates are close. The interval leaves room for large discrepancies in either direction, so this is not evidence that the observational procedure recovered the randomized effect.
+Using the public four-arm mathematics and vocabulary trial of Keller et al., this study constructs a randomized benchmark for participants who received their preferred session. A finite-sample decomposition measures how much of an observational–experimental discrepancy comes from differences in the target populations’ preference composition.
 
-A later decomposition of the full-sample observational-minus-randomized discrepancy, 0.315 points, assigns 0.288 to the gap between the observational average treatment effect and the concordant benchmark, -0.00016 to estimand composition, and 0.027 to the difference between a post-stratified randomized benchmark and the unadjusted full-sample difference in means. The concordant benchmark can be constructed for any common assignment probability strictly between 0 and 1. It equals the full-population average treatment effect if and only if that probability is one half or the two preference-group effects are equal. The composition term is small here because its preference-weight factor is fixed and small. The gap from the concordant benchmark is not a pure measure of confounding. Concordant ATE and the decomposition are subsequent analyses. Cross-fitting seeds, Lin adjustment, covariate subsets, sensitivity bounds, and trimming are exploratory. The study is not fully preregistered. L3 was not run.
+In the prespecified mathematics comparison, the observational and randomized treated-effect estimates were 0.794 and 0.795 points. The 95% paired-bootstrap interval for their difference was [−0.949, 0.664]. Preference composition accounted for −0.00016 points of a 0.315-point full-sample gap. For vocabulary, the largest aligned discrepancy was 0.913 points among mathematics-preferring participants. Its marginal 95% interval was [0.093, 1.896] and its interval adjusted for six exploratory contrasts was [−0.193, 2.413]. The vocabulary specification was written after the mathematics results were known.
 
-## Run
+## Reproduce the paper exhibits
 
-From this directory, with `PYTHONPATH=src`:
+The checked environment uses Python 3.12.10 on Windows and the pinned dependencies in `requirements-dev.txt`. From the repository root, create a project virtual environment on first use, download the original R data file, and choose a fresh output directory. The script verifies the input SHA-256 before reading it. The linked author-repository commit contains the same R data bytes as CRAN WSCdata 0.1.2.
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest
-.\.venv\Scripts\python.exe -m p4_causal_validation.experiments.reproduce_young --config configs/reproduction.yaml
+py -3.12 -m venv .venv
+$py = '.\.venv\Scripts\python.exe'
+& $py -m pip install -r requirements-dev.txt
+$env:PYTHONPATH = 'src'
+& $py -m pytest -q
+Invoke-WebRequest 'https://raw.githubusercontent.com/jzangela/WSCdata/6360a5247567c0ff632cd12aa2f6b3cfff92b2b6/data/WSCdata.rda' -OutFile WSCdata.rda
+& $py scripts/reproduce_manuscript.py WSCdata.rda outputs/paper-reproduction
 ```
 
-Exploratory reanalysis scripts are in `exploratory/wsc_reanalysis/`. Raw WSC data and bootstrap dumps are not in this repository.
+The reproduction runs scripts 01–09 on a new copy of the analysis files. It writes tables and replicate-level outputs under `results/` and five figures under `figures/` within the output directory. It checks the six observed contrasts and their marginal intervals against the archived table, all six adjusted intervals, the number of successful redraws, and the decomposition in every joint-bootstrap replicate for both outcomes. Some bootstrap draws have extreme weights, so the reported standard deviations and percentile intervals describe different aspects of the distribution.
+
+The original prespecified mathematics bootstrap used three design cells. The first script rebuilds a later four-cell bootstrap. For the primary interval in the main figure, script 08 instead takes percentiles of the 2,000 archived paired contrasts. The archive contains one row per draw with the two estimates and their difference. The original summary provides the source report and protocol hashes. The full outcome and covariate data come from the upstream authors.
+
+[Original study](https://pmc.ncbi.nlm.nih.gov/articles/PMC12959902/) · [Archived numerical outputs](exploratory/wsc_reanalysis/published) · [Frozen protocol](configs/frozen_protocol.yaml)
+
+## Build the documents
+
+From `manuscript/submission/`, compile `main.tex` and `supplementary_material.tex` separately with Tectonic or LaTeX and BibTeX. The journal style file is distributed in the [Observational Studies author template](https://obs.scholasticahq.com/for-authors).
+
+The prior paper sources remain in `manuscript/revision_20261030/`. The separate Young reproduction entry point is `python -m p4_causal_validation.experiments.reproduce_young --config configs/reproduction.yaml`.

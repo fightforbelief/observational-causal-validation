@@ -51,6 +51,7 @@ student_notes/
 decisions/
 *.md
 !/README.md
+!exploratory/wsc_reanalysis/VOCAB_SPEC.md
 # Result figures stay local
 *.png
 *.jpg

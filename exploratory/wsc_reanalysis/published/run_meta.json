@@ -1,0 +1,13 @@
+{
+ "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+ "platform": "Windows-11-10.0.26200-SP0",
+ "sklearn": "1.6.1",
+ "numpy": "2.2.6",
+ "pandas": "2.3.2",
+ "B": 2000,
+ "seed": 20261026,
+ "data_sha256": "2d82de83e968514596cec3ab61990252ebd95fec389c43fba990885ee8700bc8",
+ "wsc_lib_sha256": "4bd18119f772385671a53b1ed8a72f7557c1e58278a4e5dadff5b7fd71afca91",
+ "script_sha256": "11c934af9881d65a297134ed192735b728ecf367894fe10e86c8d0fd90cf16d4",
+ "seconds": 8.337887287139893
+}
