@@ -1,0 +1,17 @@
+# Randomized validation of counterfactual predictions
+
+Exploratory specification, 24 November 2026. The original trial outcomes, four-arm means, linear AIPW contrasts, and 20 November paper were already available. This specification fixes the new analysis before computing its residuals. The validation rows are held out of model fitting. They have previously contributed to other analyses of the same study.
+
+## Four fitted prediction rules
+
+Use both outcomes with the treatment and preference coding of the 20 November paper. For each outcome take both preference strata. Fit only on concordant participants, using the existing 25-covariate, five-fold linear AIPW ATT and ATU with seed 20261026. For each target stratum fit OLS of the outcome on all 25 covariates in the opposite concordant cell. Add a constant to this prediction so its average on the target concordant cell equals the unobserved-arm mean implied by the fitted ATT or ATU. Fix the prediction rule before evaluating discordant observations. The base function and shift together define the rule being validated.
+
+For each target stratum, calculate the signed mean observed-minus-predicted outcome in the discordant cell. Use positive sign for ATT and negative for ATU so it is in the observational-minus-randomized direction. Report the prediction-mean difference across target-stratum cells, the original unadjusted-benchmark gap, the unshifted OLS signed residual mean, and the calibration shift. Check the decomposition exactly for every comparison. The validation target is mean error for a new participant in the specified preference group under the opposite intervention, conditional on the trained rule.
+
+## Within-stratum cancellation
+
+For each of the four comparisons split by its outcome's baseline pre-test, above versus at or below the median in its target concordant cell. Ties remain in the lower group. Report both group means and their high-minus-low contrast. Treat the four marginal signed means and the four high-minus-low contrasts as one exploratory family. Give two-sided Student intervals for means and Welch intervals for differences at nominal 95% and Bonferroni level 1−0.05/8. Report all eight, including null or imprecise results. Use conditional sampling inference with independent participants and common randomization probability, fixed fitted rules and thresholds. Report the group counts. No model selection, alternative cut points or equivalence declarations.
+
+## Known-truth verification
+
+Use 5,000 independent simulated trials per scenario, fixed seed 20261124. Fit a linear prediction on a concordant source sample; estimate a mean shift using concordant data only. Evaluate signed mean and high-minus-low residuals on independent validation participants in the opposite assignment. Use a binary baseline group with balanced population prevalence, a continuous prognostic covariate, and fresh untreated outcome noise. Compare a common response surface, compensating group-specific shifts (opposite one-point deviations from the source response), and the compensating shifts with right-skewed errors and smaller validation samples. Record coverage relative to the analytical truth conditional on each fitted rule, Monte Carlo error, and zero exclusion. Include a constant prediction as an algebraic boundary case; verify that perturbing validation outcomes cannot affect training. This evaluates the proposed conditional inference and the cancellation diagnostic. It supplies no additional empirical population.
