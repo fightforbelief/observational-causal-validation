@@ -4,14 +4,14 @@
 \usepackage{amsmath,booktabs,array}
 \usepackage[hidelinks]{hyperref}
 \heading{}{}{}{}{}{Yunjie Guo and Hanqing Yang}
-\ShortHeadings{Estimand alignment in a four-arm comparison}{Guo and Yang}
+\ShortHeadings{Checking counterfactual predictions}{Guo and Yang}
 \firstpageno{1}
 \renewcommand{\thefigure}{S\arabic{figure}}
 \renewcommand{\thetable}{S\arabic{table}}
 \renewcommand{\theequation}{S\arabic{equation}}
 
 \title{Supplementary Material\\
-Estimand Alignment in a Four-Arm Within-Study Comparison}
+Checking Counterfactual Predictions in a Four-Arm Within-Study Comparison}
 \author{\name Yunjie Guo \\
   \addr Independent Researcher, Suzhou, China
   \AND \name Hanqing Yang \email hanqing.yang189@gmail.com \\
@@ -24,7 +24,7 @@ Estimand Alignment in a Four-Arm Within-Study Comparison}
 \shortcites{chernozhukov2018}
 
 \noindent
-This supplement records exact numerical values, estimator formulas, and exploratory displays for the accompanying article. The prespecified primary interval is the one in the article's Table~2. Intervals computed by the later four-cell bootstrap, and intervals computed from 1{,}000-replicate trimming runs, are labeled as such wherever they appear. Section~\ref{sec:vocab-exact} concerns the secondary outcome \texttt{vocabPost}; all other sections concern \texttt{mathPost}. Machine-precision values below are the audited estimates. Rounded values in the article are the corresponding three-decimal, or, for the primary difference, five-decimal, displays.
+This supplement records exact numerical values, estimator formulas, and exploratory displays for the accompanying article. The prespecified primary interval is the one in the article's Table~2. Intervals computed by the later four-cell bootstrap, and intervals computed from 1{,}000-replicate trimming runs, are labeled as such wherever they appear. Section~\ref{sec:vocab-exact} concerns the secondary outcome \texttt{vocabPost}; Section~\ref{sec:audit-supp} covers both outcomes and the simulation; the remaining sections concern \texttt{mathPost}. Machine-precision values below are the audited estimates. Rounded values in the article are the corresponding three-decimal, or, for the primary difference, five-decimal, displays.
 
 \section{Exact primary and full-sample estimates}
 \label{sec:exact}
@@ -359,6 +359,8 @@ Crump, $\alpha=0.084$ & 1{,}561 & 268 / 495 & 0.404 & $-0.011$ & 0.640 & 0.411 \
 \end{tabular}
 \end{table}
 
+
+\input{discordant_supplement}
 
 \bibliography{references}
 

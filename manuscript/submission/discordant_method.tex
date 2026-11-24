@@ -1,0 +1,53 @@
+\section{Testing the implied counterfactual against observed scores}
+\label{sec:validation}
+
+Consider participants who preferred mathematics. An observational ATT of 0.794 implies a mean mathematics score for those participants under vocabulary training: subtract 0.794 from their observed mean under mathematics training. A scalar ATT gives no rule for predicting which participants would score high or low. The four-arm design provides both a way to specify such a rule and a sample in which to evaluate it. Participants who preferred mathematics but were randomized to vocabulary reveal scores under the intervention that the observational analysis must extrapolate to. They enter the validation calculation only after the prediction rule has been fitted. The original paper used these same participants for its randomized contrasts, so this secondary analysis is exploratory.
+
+For one outcome and preference stratum $s$, write $T$ for the concordant target cell and $V$ for the discordant cell with the same preference. Let $a=2s-1$ and let $q_s$ be the observational ATT for $s=1$ or ATU for $s=0$, in treatment-minus-control units. The randomized benchmark is $a(\bar Y_T-\bar Y_V)$. The mean opposite-session score implied by the observational estimate is $u_s=\bar Y_T-aq_s$. Fit a linear regression $m(x)$ of the outcome on the original 25 covariates using only the opposite concordant cell, where participants received session $1-s$. Set
+\[
+ f(x)=m(x)+u_s-\bar m_T,\qquad \bar f_T=u_s .
+\]
+This intercept adjustment preserves the observational effect exactly. For this rule define
+\begin{align}
+ q_s-a(\bar Y_T-\bar Y_V)
+ &= \underbrace{a\,\overline{(Y-f)}_V}_{R_s}
+    +\underbrace{a(\bar f_V-\bar f_T)}_{M_s}.
+ \label{eq:residual-audit}
+\end{align}
+The first term measures signed prediction error among participants who received the opposite session. The second measures how average predictions change across the two randomized cells of the same preference group. The equality follows by substituting $\bar f_T=u_s$ and holds for any prediction rule with that mean. For vocabulary ATU, for example, $a=-1$: a positive residual term means the predicted score under vocabulary training was too high for participants who preferred mathematics.
+
+Assume independent draws from a study population, consistent outcomes, and simple randomized assignment independent of baseline covariates, preferences, and potential outcomes. Conditional on cell counts and the concordant training records, the discordant records in stratum $s$ are independent draws from the law of $(X,Y(1-s))$ given $S=s$. This follows by conditioning the independent draws on their cell labels and using randomization within preference. Thus $R_s$ is unbiased for the signed mean opposite-session prediction error of this fixed rule in a new participant from that stratum. The same reasoning applies within a subgroup defined from baseline covariates before evaluating $V$. No exchangeability of preference given covariates is required for this evaluation. Its sampling interval conditions on the trained rule. The earlier paired bootstrap instead propagates uncertainty in fitting the observational estimator and in estimating the randomized contrast. An interval for one target cannot establish equivalence for the other.
+
+For each outcome we also evaluated whether high and low pre-test scores had different signed errors. The cut was the median of the corresponding pre-test in $T$, with ties assigned to the lower group. We used Student intervals for the mean residual and Welch intervals for the high-minus-low difference. The four means and four differences form one family with Bonferroni-adjusted two-sided intervals. The eight tests use previously studied outcomes. Their intervals are approximate under independent sampling and do not account for the choice to pursue this analysis after the original results were known.
+
+\paragraph{What does a scalar effect leave undetermined?}
+Any $f_b(x)=f(x)+b^\top(x-\bar X_T)$ gives the same observational ATT or ATU. Let $G_T$ be the target cell's empirical covariate covariance with divisor $|T|$, and let $d=\bar X_V-\bar X_T$. Among linear perturbations with root-mean-square size at most $r$ in $T$, the largest possible change in $R_s$ is
+\begin{equation}
+ r\sqrt{d^\top G_T^+d},\qquad d\in\operatorname{range}(G_T).
+ \label{eq:shape-bound}
+\end{equation}
+Indeed the change is $-a b^\top d$ and the squared perturbation size is $b^\top G_T b$. Cauchy--Schwarz in the positive eigenspace gives the bound, attained for $b$ proportional to $G_T^+d$ when $d\ne0$. A nonzero component of $d$ in the null space yields unbounded change. For the high-minus-low contrast the same formula uses the difference of the two validation subgroup covariate means. This dual-norm calculation is related to covariate balance bounds in matching \citep{kallus2020}. Here it quantifies ambiguity in assigning an observed scalar discrepancy to prediction error. It is a sensitivity range on the observed sample, not a confidence interval. Counterfactual prediction performance has previously been studied directly \citep{boyer2025}; the connection in \eqref{eq:residual-audit} is to an already reported scalar effect and the independently assigned cell available to check its implied predictions.
+
+\subsection{What the discordant participants reveal}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Signed errors of the fitted opposite-session predictions in test points. Positive means underprediction for ATT and overprediction for ATU. The interval for the mean error is conditional on the trained rule and adjusted across eight contrasts. Low and high refer to the outcome-specific pre-test.}
+\label{tab:audit}\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrrrr}
+\toprule
+Outcome & Target & Original gap & $R_s$ & Adjusted interval & $M_s$ & Low & High \\
+\midrule
+Mathematics & ATT & $-0.00045$ & 0.086 & $[-0.219,0.391]$ & $-0.087$ & $-0.179$ & 0.481 \\
+Mathematics & ATU & 0.390 & 0.282 & $[0.063,0.500]$ & 0.108 & 0.080 & 0.518 \\
+Vocabulary & ATT & 0.392 & 0.621 & $[0.355,0.887]$ & $-0.229$ & 0.491 & 0.786 \\
+Vocabulary & ATU & 0.913 & 0.856 & $[0.414,1.297]$ & 0.058 & 1.355 & 0.340 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For the mathematics ATT, the original near-zero gap splits into a signed error of $+0.086$ points and a prediction-mean difference of $-0.087$ points (Table~\ref{tab:audit}). Among 191 participants scoring at or below 10 on the mathematics pre-test, the prediction exceeded the observed score by 0.179 points on average. Among the other 128 it fell short by 0.481 points. The 0.660-point difference has an adjusted fixed-rule interval of $[0.093,1.227]$. The intercept cancels when the two group means are subtracted. The gradient therefore diagnoses the shape of the chosen outcome regression, and is exactly the same before and after shifting its intercept to reproduce the AIPW estimate.
+
+Allowing the opposite concordant cell's regression slopes to vary under repeated sampling gives an adjusted interval of $[0.022,1.298]$ for the mathematics ATT gradient. The vocabulary ATU gradient is $-1.015$ with the corresponding interval $[-2.026,-0.004]$. Both endpoints nearest zero are small. Mathematics ATU illustrates why this distinction matters: its fixed-rule gradient interval is $[0.001,0.875]$, but the interval for the population projection is $[-0.306,1.182]$. The supplement reports both targets for all four gradients, the variance calculation, and a known-truth simulation.
+
+For the two vocabulary means, the smallest linear perturbations that would move the observed residual to zero while preserving the scalar effect are 2.03 points RMS for ATT and 2.22 for ATU. The mathematics ATT mean requires only 0.22 points. Its high-minus-low difference requires 0.40 points. These radii quantify exactly how much the chosen predictions must change on the target concordant sample. They do not establish a plausible upper bound on misspecification. Nor do the fixed-rule residual intervals revise the original uncertainty about an observational effect.

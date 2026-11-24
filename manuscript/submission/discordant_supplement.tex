@@ -1,0 +1,44 @@
+\section{Discordant-cell validation and training uncertainty}
+\label{sec:audit-supp}
+
+The four rows of Table~\ref{tab:gradients} use one rule per outcome and preference stratum. In mathematics ATT the target cell is G1 and the validation cell is G2. In mathematics ATU these are G4 and G3. The vocabulary coding interchanges the two pairs. In every case the source regression uses the other concordant cell. The intercept shifts for mathematics ATT, mathematics ATU, vocabulary ATT, and vocabulary ATU are respectively 0.222, 0.051, 0.166, and 0.358 points. The corresponding signed mean residuals before shifting are 0.308, 0.231, 0.787, and 0.497.
+
+\begin{table}[htbp]
+\centering\small
+\caption{High-minus-low signed residual differences. Fixed-rule and population-projection intervals both use the eight-way correction. The cut is fixed at the median pre-test score in the separate target concordant cell.}
+\label{tab:gradients}\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{llrrrrr}
+\toprule
+Outcome & Target & Cut & Low / high $n$ & Difference & Fixed rule & Population slope \\
+\midrule
+Mathematics & ATT & 10 & 191 / 128 & 0.660 & $[0.093,1.227]$ & $[0.022,1.298]$ \\
+Mathematics & ATU & 7 & 419 / 357 & 0.438 & $[0.001,0.875]$ & $[-0.306,1.182]$ \\
+Vocabulary & ATT & 16 & 434 / 342 & 0.294 & $[-0.245,0.833]$ & $[-0.618,1.207]$ \\
+Vocabulary & ATU & 15 & 162 / 157 & $-1.015$ & $[-1.882,-0.148]$ & $[-2.026,-0.004]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Let $\beta_*$ denote the linear least-squares projection coefficient in the source population and $d_X=\bar X_{V,H}-\bar X_{V,L}$. For the fitted high-minus-low residual contrast, the intercept adjustment drops out. Subtracting the corresponding population gradient and expanding around $\beta_*$ gives two first-order contributions: validation-sample noise in the high-minus-low residual contrast evaluated at $\beta_*$, and $-a\,E[d_X]^\top(\widehat\beta-\beta_*)$. The product of the slope error and the error in $d_X$ is second order when both sample sizes increase with fixed covariate dimension, finite moments and a nonsingular design on its estimable space. Conditional on the cut and cell counts, the source and validation observations are independent. Hence the sandwich variance estimate is the validation Welch variance plus $d_X^\top\widehat{\operatorname{Var}}_{\mathrm{HC3}}(\widehat\beta)d_X$. We use a zero intercept component in this quadratic form. The source contributions to the standard error (square roots of the added variances) are 0.110, 0.220, 0.270, and 0.194 points in table order. The combined intervals use normal critical values. This secondary calculation was specified after the fixed-rule results were examined.
+
+In table order, the sharp changes per unit RMS perturbation are 0.385, 0.306, 0.306, and 0.385 for the mean residuals. For the high-minus-low gradients they are 1.631, 1.699, 1.803, and 1.867. Thus the four observed gradients first reach zero at RMS perturbations of 0.405, 0.258, 0.163, and 0.544 points. The extremizing direction may depend on the validation covariates. The confidence intervals in Table~\ref{tab:gradients} apply to the specified rule or population projection, not to rules chosen by optimizing over the validation sample.
+
+\subsection{Known-truth experiment}
+Each of 5,000 trials per scenario draws independent source fitting ($n=160$), source calibration ($n=120$), and validation samples. The binary baseline $G$ is equally likely to be $-1$ or $1$ and independent of $Z$, which is normal with variance one and mean $-0.5$ in the source and $0.5$ in validation. The source outcome is $2+0.7Z+0.4G+\epsilon$; the validation outcome adds $\delta G$. OLS fits an intercept and both slopes in the source fitting sample. We shift its intercept by the average source calibration residual weighted by $\exp(Z)$, the validation-to-source density ratio. This produces training variation in both the shape and the mean. The first two scenarios use standard normal errors. The third uses unit exponential errors minus one. All noise draws are independent. These synthetic samples test conditional inference for fitted scores and training-inclusive inference for the population gradient. They do not emulate the trial's complete AIPW fitting pipeline.
+
+If the shifted coefficients are $(b_0,b_Z,b_G)$, the fixed-rule mean error is $2-b_0+0.5(0.7-b_Z)$ and the fixed-rule gradient is $2(0.4-b_G+\delta)$. The gradient for the population projection is $2\delta$. The sample mean error misses compensating deviations across the two groups at the population level. In the cancellation scenario the estimated mean averaged 0.001 points over fits while the estimated gradient averaged 1.999. Table~\ref{tab:sim-audit} gives empirical coverage. For the nominal 95\% columns Monte Carlo standard errors are about 0.003. At the corrected level they are about 0.001. The reported rates are marginal coverage of individual intervals, not estimated coverage of an eight-dimensional family.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Simulated coverage. Each cell gives nominal 95\% / 99.375\% interval coverage. The first two targets condition on the fitted rule.}
+\label{tab:sim-audit}
+\begin{tabular}{lrrrr}
+\toprule
+Scenario & Validation $n$ & Fitted mean & Fitted gradient & Population gradient \\
+\midrule
+Common surface ($\delta=0$) & 319 & .949 / .995 & .952 / .994 & .948 / .992 \\
+Offsets $\pm1$ ($\delta=1$) & 319 & .953 / .993 & .948 / .993 & .954 / .995 \\
+Offsets $\pm1$, skewed errors & 90 & .956 / .995 & .949 / .993 & .947 / .994 \\
+\bottomrule
+\end{tabular}
+\end{table}
